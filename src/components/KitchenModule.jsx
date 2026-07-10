@@ -426,11 +426,130 @@ function useCustomAiMaterial(app, imageUrl) {
   return mat;
 }
 
+// ─── Sub-Models ───
+function LampModel({ w, h, d, customMat, isSelected }) {
+  const blackMat = useMaterial({ diffuse: hexToColor('#1a1a1a'), roughness: 0.6, metalness: 0.1 });
+  const goldMat = useMaterial({ diffuse: hexToColor('#e2a85c'), roughness: 0.15, metalness: 0.8 });
+  const glowMat = useMaterial({ diffuse: hexToColor('#ffeed6'), emissive: hexToColor('#ffeed6'), emissiveIntensity: 2.0 });
+
+  const standH = 0.02;
+  const baseH = h * 0.25;
+  const stemH = h * 0.4;
+  const shadeH = h * 0.35;
+
+  return (
+    <Entity name="custom-lamp">
+      <Entity position={[0, standH / 2, 0]} scale={[w * 0.6, standH, w * 0.6]}>
+        <Render type="cylinder" material={blackMat} castShadows />
+      </Entity>
+      <Entity position={[0, standH + baseH / 2, 0]} scale={[w * 0.5, baseH, w * 0.5]}>
+        <Render type="cone" material={goldMat} castShadows />
+      </Entity>
+      <Entity position={[0, standH + baseH + stemH / 2, 0]} scale={[w * 0.08, stemH, w * 0.08]}>
+        <Render type="cylinder" material={blackMat} castShadows />
+      </Entity>
+      <Entity position={[0, standH + baseH + stemH, 0]} scale={[w * 0.15, w * 0.15, w * 0.15]}>
+        <Render type="sphere" material={glowMat} />
+      </Entity>
+      <Entity position={[0, h - shadeH / 2, 0]} scale={[w, shadeH, w]}>
+        <Render type="cylinder" material={customMat} castShadows receiveShadows />
+      </Entity>
+      {isSelected && <SelectionBox width={w} height={h} depth={d} />}
+    </Entity>
+  );
+}
+
+function StoolModel({ w, h, d, customMat, isSelected }) {
+  const woodMat = useMaterial({ diffuse: hexToColor('#8b5a2b'), roughness: 0.6 });
+  const legW = 0.03;
+  const seatH = h * 0.08;
+  const legH = h - seatH;
+
+  return (
+    <Entity name="custom-stool">
+      <Entity position={[0, h - seatH / 2, 0]} scale={[w, seatH, d]}>
+        <Render type="cylinder" material={customMat} castShadows />
+      </Entity>
+      <Entity position={[-w * 0.35, legH / 2, -d * 0.35]} scale={[legW, legH, legW]}>
+        <Render type="cylinder" material={woodMat} castShadows />
+      </Entity>
+      <Entity position={[w * 0.35, legH / 2, -d * 0.35]} scale={[legW, legH, legW]}>
+        <Render type="cylinder" material={woodMat} castShadows />
+      </Entity>
+      <Entity position={[-w * 0.35, legH / 2, d * 0.35]} scale={[legW, legH, legW]}>
+        <Render type="cylinder" material={woodMat} castShadows />
+      </Entity>
+      <Entity position={[w * 0.35, legH / 2, d * 0.35]} scale={[legW, legH, legW]}>
+        <Render type="cylinder" material={woodMat} castShadows />
+      </Entity>
+      {isSelected && <SelectionBox width={w} height={h} depth={d} />}
+    </Entity>
+  );
+}
+
+function TableModel({ w, h, d, customMat, isSelected }) {
+  const woodMat = useMaterial({ diffuse: hexToColor('#5c3a21'), roughness: 0.7 });
+  const legW = 0.05;
+  const topH = 0.04;
+  const legH = h - topH;
+
+  return (
+    <Entity name="custom-table">
+      <Entity position={[0, h - topH / 2, 0]} scale={[w, topH, d]}>
+        <Render type="box" material={customMat} castShadows receiveShadows />
+      </Entity>
+      <Entity position={[-w * 0.42, legH / 2, -d * 0.42]} scale={[legW, legH, legW]}>
+        <Render type="cylinder" material={woodMat} castShadows />
+      </Entity>
+      <Entity position={[w * 0.42, legH / 2, -d * 0.42]} scale={[legW, legH, legW]}>
+        <Render type="cylinder" material={woodMat} castShadows />
+      </Entity>
+      <Entity position={[-w * 0.42, legH / 2, d * 0.42]} scale={[legW, legH, legW]}>
+        <Render type="cylinder" material={woodMat} castShadows />
+      </Entity>
+      <Entity position={[w * 0.42, legH / 2, d * 0.42]} scale={[legW, legH, legW]}>
+        <Render type="cylinder" material={woodMat} castShadows />
+      </Entity>
+      {isSelected && <SelectionBox width={w} height={h} depth={d} />}
+    </Entity>
+  );
+}
+
+function PlantModel({ w, h, d, customMat, isSelected }) {
+  const potMat = useMaterial({ diffuse: hexToColor('#a0522d'), roughness: 0.8 });
+  const potH = h * 0.3;
+  const plantH = h - potH;
+
+  return (
+    <Entity name="custom-plant">
+      <Entity position={[0, potH / 2, 0]} scale={[w * 0.5, potH, w * 0.5]}>
+        <Render type="cone" material={potMat} castShadows />
+      </Entity>
+      <Entity position={[0, potH + plantH / 2, 0]} scale={[w, plantH, 0.005]}>
+        <Render type="box" material={customMat} castShadows />
+      </Entity>
+      {isSelected && <SelectionBox width={w} height={h} depth={d} />}
+    </Entity>
+  );
+}
+
 function CustomAiObjectModel({ mod, isSelected, app }) {
   const { w, h, d } = { w: mod.width, h: mod.height, d: mod.depth };
   const customMat = useCustomAiMaterial(app, mod.customImageUrl);
   const neutralMat = useMaterial({ diffuse: hexToColor('#b0b0b0'), roughness: 0.4, metalness: 0.2 });
 
+  if (mod.objectType === 'lamp') {
+    return <LampModel w={w} h={h} d={d} customMat={customMat} isSelected={isSelected} />;
+  }
+  if (mod.objectType === 'stool') {
+    return <StoolModel w={w} h={h} d={d} customMat={customMat} isSelected={isSelected} />;
+  }
+  if (mod.objectType === 'table') {
+    return <TableModel w={w} h={h} d={d} customMat={customMat} isSelected={isSelected} />;
+  }
+  if (mod.objectType === 'plant') {
+    return <PlantModel w={w} h={h} d={d} customMat={customMat} isSelected={isSelected} />;
+  }
   if (mod.objectType === 'billboard') {
     return (
       <Entity name="custom-billboard">

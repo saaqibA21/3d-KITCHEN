@@ -595,6 +595,10 @@ export default function Sidebar() {
               <label className="label">Model Style</label>
               <select value={customType} onChange={(e) => setCustomType(e.target.value)}>
                 <option value="appliance">Solid Appliance Box</option>
+                <option value="lamp">Table Lamp</option>
+                <option value="stool">Chair / Stool</option>
+                <option value="table">Dining Table</option>
+                <option value="plant">Potted Plant</option>
                 <option value="billboard">Flat Decor Billboard</option>
               </select>
             </div>
