@@ -45,6 +45,7 @@ const DEFAULT_STATE = {
   calibrationMode: false,
   calibrationPoints: [],
   pixelsPerMeter: 100,
+  customAiCatalog: [],
 };
 
 const useKitchenStore = create((set, get) => ({
@@ -94,8 +95,8 @@ const useKitchenStore = create((set, get) => ({
   },
 
   // ── Module CRUD ───────────────────────────────────────────────────────────
-  addModule: (type, position) => {
-    const defaults = MODULE_DEFAULTS[type];
+  addModule: (type, position, customProps = {}) => {
+    const defaults = type === 'custom_ai_object' ? customProps : MODULE_DEFAULTS[type];
     if (!defaults) return;
     get()._pushHistory();
     const newModule = {
@@ -104,6 +105,8 @@ const useKitchenStore = create((set, get) => ({
       position: position || [0.1, 0.1],
       rotation: 0,
       doorOpen: false,
+      textureScale: 1.0,
+      textureRotation: 0,
       ...defaults,
     };
     set((state) => ({ modules: [...state.modules, newModule], selectedId: newModule.id }));
@@ -183,6 +186,7 @@ const useKitchenStore = create((set, get) => ({
     const ppm = distPx / realDistance;
     set({ pixelsPerMeter: ppm, calibrationMode: false, calibrationPoints: [] });
   },
+  addCustomAiObject: (obj) => set((state) => ({ customAiCatalog: [...state.customAiCatalog, obj] })),
 }));
 
 export default useKitchenStore;

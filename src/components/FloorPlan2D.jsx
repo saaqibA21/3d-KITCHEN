@@ -16,6 +16,7 @@ const TYPE_COLORS = {
   refrigerator: '#aaaaaa',
   oven: '#666666',
   dishwasher: '#999999',
+  custom_ai_object: '#9ad4c8',
 };
 
 export default function FloorPlan2D() {

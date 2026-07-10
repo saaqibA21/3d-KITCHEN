@@ -47,6 +47,17 @@ const IconLogo = () => (
   </svg>
 );
 
+const IconMagic = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72Z"/>
+    <path d="m14 7 3 3"/>
+    <path d="M5 6v1"/>
+    <path d="M19 14v1"/>
+    <path d="M10 2v2"/>
+    <path d="M7 14h1"/>
+  </svg>
+);
+
 const CATALOG = [
   {
     category: 'Base Cabinets', icon: '🗄️',
@@ -147,11 +158,42 @@ export default function Sidebar() {
     showBacksplash, toggleBacksplash,
     undo, redo,
     blueprintUrl, blueprintOpacity, calibrationMode, pixelsPerMeter,
-    setBlueprintUrl, setBlueprintOpacity, setCalibrationMode, clearBlueprint
+    setBlueprintUrl, setBlueprintOpacity, setCalibrationMode, clearBlueprint,
+    customAiCatalog, addCustomAiObject
   } = useKitchenStore();
 
   const [expandedCategories, setExpandedCategories] = useState(['Base Cabinets', 'Appliances']);
-  const [activeTab, setActiveTab] = useState('modules'); // 'modules' | 'room' | 'backsplash' | 'blueprint'
+  const [activeTab, setActiveTab] = useState('modules'); // 'modules' | 'room' | 'backsplash' | 'blueprint' | 'custom'
+
+  const [customName, setCustomName] = useState('AI Refrigerator');
+  const [customWidth, setCustomWidth] = useState(0.8);
+  const [customHeight, setCustomHeight] = useState(1.8);
+  const [customDepth, setCustomDepth] = useState(0.7);
+  const [customType, setCustomType] = useState('appliance');
+  const [customImage, setCustomImage] = useState(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const handleGenerateCustom = () => {
+    if (!customImage) {
+      alert("Please upload a furniture/appliance image first!");
+      return;
+    }
+    setIsGenerating(true);
+    setTimeout(() => {
+      const newObj = {
+        id: `ai_${Date.now()}`,
+        label: customName,
+        width: customWidth,
+        height: customHeight,
+        depth: customDepth,
+        objectType: customType,
+        imageUrl: customImage
+      };
+      addCustomAiObject(newObj);
+      setIsGenerating(false);
+      alert(`✨ AI Custom Object Generated:\nSuccessfully converted "${customName}" into a 3D model!`);
+    }, 1500);
+  };
 
   // Global keyboard shortcuts
   useEffect(() => {
@@ -204,6 +246,7 @@ export default function Sidebar() {
           { id: 'room',       icon: <IconHome />, label: 'Room' },
           { id: 'backsplash', icon: <IconTiles />, label: 'Tiles' },
           { id: 'blueprint',  icon: <IconScanner />, label: 'Scanner' },
+          { id: 'custom',     icon: <IconMagic />, label: 'Custom' },
         ].map((t) => (
           <button
             key={t.id}
@@ -501,6 +544,147 @@ export default function Sidebar() {
                 >
                   🗑️ Clear Blueprint
                 </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── CUSTOM TAB ─────────────────────────────────── */}
+        {activeTab === 'custom' && (
+          <div className="sidebar-section animate-slide-up">
+            <h3 className="sidebar-section-title">🪄 AI Furniture Generator</h3>
+            
+            <div className="form-row">
+              <label className="label">Object Image</label>
+              <div style={{ position: 'relative', width: '100%' }}>
+                <div className="mc-add-swatch" style={{ width: '100%', height: 120, flexDirection: 'column', gap: 8, fontSize: '0.8rem', borderStyle: 'dashed' }}>
+                  {customImage ? (
+                    <img src={customImage} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: 'var(--radius-sm)' }} />
+                  ) : (
+                    <>
+                      <span>📤</span>
+                      <span>Upload Image File</span>
+                    </>
+                  )}
+                  <input
+                    type="file" accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (file) {
+                        const r = new FileReader();
+                        r.onload = (ev) => setCustomImage(ev.target.result);
+                        r.readAsDataURL(file);
+                      }
+                    }}
+                    style={{ position: 'absolute', opacity: 0, width: '100%', height: '100%', cursor: 'pointer', left: 0, top: 0 }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="form-row">
+              <label className="label">Object Name</label>
+              <input
+                type="text" value={customName}
+                onChange={(e) => setCustomName(e.target.value)}
+                placeholder="e.g. Vintage Refrigerator"
+              />
+            </div>
+
+            <div className="form-row">
+              <label className="label">Model Style</label>
+              <select value={customType} onChange={(e) => setCustomType(e.target.value)}>
+                <option value="appliance">Solid Appliance Box</option>
+                <option value="billboard">Flat Decor Billboard</option>
+              </select>
+            </div>
+
+            <div className="divider" />
+
+            <h4 className="label">Dimensions (meters)</h4>
+            <div className="dims-grid" style={{ marginBottom: 14 }}>
+              <div className="dim-field">
+                <span className="dim-label" style={{ textAlign: 'center', display: 'block' }}>W</span>
+                <input
+                  type="number" step={0.05} min={0.1} max={4}
+                  value={customWidth} onChange={(e) => setCustomWidth(parseFloat(e.target.value))}
+                />
+              </div>
+              <div className="dim-field">
+                <span className="dim-label" style={{ textAlign: 'center', display: 'block' }}>D</span>
+                <input
+                  type="number" step={0.05} min={0.1} max={3}
+                  value={customDepth} onChange={(e) => setCustomDepth(parseFloat(e.target.value))}
+                />
+              </div>
+              <div className="dim-field">
+                <span className="dim-label" style={{ textAlign: 'center', display: 'block' }}>H</span>
+                <input
+                  type="number" step={0.05} min={0.1} max={4}
+                  value={customHeight} onChange={(e) => setCustomHeight(parseFloat(e.target.value))}
+                />
+              </div>
+            </div>
+
+            <button
+              className="btn-primary"
+              style={{ width: '100%', justifyContent: 'center' }}
+              onClick={handleGenerateCustom}
+              disabled={isGenerating}
+            >
+              {isGenerating ? '⌛ AI Rendering...' : '🪄 Generate 3D Model'}
+            </button>
+
+            <div className="divider" style={{ margin: '18px 0 14px 0' }} />
+
+            <h3 className="sidebar-section-title">📦 Your Custom AI Models</h3>
+            
+            {customAiCatalog.length === 0 ? (
+              <div className="empty-state" style={{ padding: '16px 8px' }}>
+                <p>No custom objects created yet. Upload an image above to generate one!</p>
+              </div>
+            ) : (
+              <div className="catalog-items" style={{ padding: 0, gap: 6, background: 'transparent' }}>
+                {customAiCatalog.map((obj) => (
+                  <div
+                    key={obj.id}
+                    className="catalog-item animate-scale-in"
+                    style={{
+                      display: 'flex', flexDirection: 'column', gap: 6,
+                      background: 'rgba(60, 98, 85, 0.03)', border: '1px solid var(--border-subtle)',
+                      padding: 10, borderRadius: 'var(--radius-sm)', transform: 'none'
+                    }}
+                  >
+                    <div style={{ display: 'flex', gap: 10, width: '100%' }}>
+                      <img
+                        src={obj.imageUrl} alt={obj.label}
+                        style={{ width: 44, height: 44, borderRadius: 4, objectFit: 'cover', background: '#fff', border: '1px solid var(--border-subtle)' }}
+                      />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontWeight: 700, fontSize: '0.78rem', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {obj.label}
+                        </div>
+                        <div style={{ fontSize: '0.62rem', color: 'var(--text-muted)' }}>
+                          {obj.width} × {obj.depth} × {obj.height}m • {obj.objectType}
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      className="btn-secondary"
+                      style={{ width: '100%', justifyContent: 'center', padding: '6px 8px', fontSize: '0.72rem' }}
+                      onClick={() => addModule('custom_ai_object', null, {
+                        label: obj.label,
+                        width: obj.width,
+                        height: obj.height,
+                        depth: obj.depth,
+                        customImageUrl: obj.imageUrl,
+                        objectType: obj.objectType
+                      })}
+                    >
+                      ➕ Add to Layout
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
           </div>

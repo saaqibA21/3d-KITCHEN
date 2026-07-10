@@ -1,8 +1,8 @@
-import React, { useRef, useMemo, useState } from 'react';
+import React, { useRef, useMemo, useState, useEffect } from 'react';
 import { Entity } from '@playcanvas/react';
 import { Render } from '@playcanvas/react/components';
 import { useMaterial, useApp, useAppEvent } from '@playcanvas/react/hooks';
-import { Vec2, math, BLEND_NORMAL } from 'playcanvas';
+import { Vec2, math, BLEND_NORMAL, Texture } from 'playcanvas';
 import useKitchenStore from '../store/kitchenStore';
 import { SinkModel, StoveModel, RefrigeratorModel, OvenModel, DishwasherModel } from './Appliances';
 import { getCabinetTexture, getCountertopTexture } from '../utils/textures';
@@ -396,6 +396,67 @@ function RangeHood({ mod, isSelected, app }) {
   );
 }
 
+// ─── Custom AI Object Renderer ───────────────────────────────────────────────
+function useCustomAiMaterial(app, imageUrl) {
+  const [texture, setTexture] = useState(null);
+
+  useEffect(() => {
+    if (!imageUrl) return;
+    const img = new Image();
+    img.src = imageUrl;
+    img.onload = () => {
+      if (!app || !app.graphicsDevice) return;
+      const tex = new Texture(app.graphicsDevice, {
+        width: img.width,
+        height: img.height,
+        format: 1, // PIXELFORMAT_RGBA8
+        autoMipmap: true
+      });
+      tex.setSource(img);
+      setTexture(tex);
+    };
+  }, [app, imageUrl]);
+
+  const mat = useMaterial({
+    diffuseMap: texture || undefined,
+    roughness: 0.6,
+    metalness: 0.1,
+  });
+
+  return mat;
+}
+
+function CustomAiObjectModel({ mod, isSelected, app }) {
+  const { w, h, d } = { w: mod.width, h: mod.height, d: mod.depth };
+  const customMat = useCustomAiMaterial(app, mod.customImageUrl);
+  const neutralMat = useMaterial({ diffuse: hexToColor('#b0b0b0'), roughness: 0.4, metalness: 0.2 });
+
+  if (mod.objectType === 'billboard') {
+    return (
+      <Entity name="custom-billboard">
+        <Entity position={[0, h / 2, 0]} scale={[w, h, 0.005]}>
+          <Render type="box" material={customMat} castShadows receiveShadows />
+        </Entity>
+        {isSelected && <SelectionBox width={w} height={h} depth={d} />}
+      </Entity>
+    );
+  }
+
+  return (
+    <Entity name="custom-appliance">
+      {/* Front face projection */}
+      <Entity position={[0, h / 2, d / 2 - 0.002]} scale={[w, h, 0.004]}>
+        <Render type="box" material={customMat} castShadows />
+      </Entity>
+      {/* Back and side casing */}
+      <Entity position={[0, h / 2, -0.002]} scale={[w - 0.004, h - 0.004, d - 0.004]}>
+        <Render type="box" material={neutralMat} castShadows receiveShadows />
+      </Entity>
+      {isSelected && <SelectionBox width={w} height={h} depth={d} />}
+    </Entity>
+  );
+}
+
 // ─── Renderer Map ─────────────────────────────────────────────────────────────
 const CABINET_MAP = {
   base_cabinet: BaseCabinet,
@@ -408,6 +469,7 @@ const CABINET_MAP = {
   open_shelf:   OpenShelf,
   wine_rack:    WineRack,
   range_hood:   RangeHood,
+  custom_ai_object: CustomAiObjectModel,
 };
 
 const APPLIANCE_MAP = {
