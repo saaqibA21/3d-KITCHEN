@@ -143,15 +143,146 @@ export default function FloorPlan2D() {
     ctx.lineWidth = 4;
     ctx.strokeRect(origin.x, origin.y, roomW, roomD);
 
-    // Wall labels
-    ctx.fillStyle = '#3c6255';
-    ctx.font = '11px Inter, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(`${roomConfig.width}m`, origin.x + roomW / 2, origin.y - 8);
+    // Exterior Dimension Lines & ticks (Top and Left)
     ctx.save();
-    ctx.translate(origin.x - 12, origin.y + roomD / 2);
+    ctx.strokeStyle = '#6e7a75';
+    ctx.fillStyle = '#6e7a75';
+    ctx.lineWidth = 1;
+    ctx.font = '10px Inter, sans-serif';
+    ctx.textAlign = 'center';
+
+    const drawHash = (cx, cy) => {
+      ctx.beginPath();
+      ctx.moveTo(cx - 4, cy + 4);
+      ctx.lineTo(cx + 4, cy - 4);
+      ctx.stroke();
+    };
+
+    // 1. Top Wall Main Dimension Line
+    const topY = origin.y - 24;
+    ctx.beginPath();
+    ctx.moveTo(origin.x, topY);
+    ctx.lineTo(origin.x + roomW, topY);
+    ctx.stroke();
+
+    // Extension lines
+    ctx.beginPath();
+    ctx.moveTo(origin.x, origin.y);
+    ctx.lineTo(origin.x, topY - 4);
+    ctx.moveTo(origin.x + roomW, origin.y);
+    ctx.lineTo(origin.x + roomW, topY - 4);
+    ctx.stroke();
+
+    drawHash(origin.x, topY);
+    drawHash(origin.x + roomW, topY);
+
+    // Dimension text background + text
+    ctx.fillStyle = '#fbfaf7';
+    const topText = `${roomConfig.width.toFixed(2)} m`;
+    const topTextW = ctx.measureText(topText).width + 8;
+    ctx.fillRect(origin.x + roomW / 2 - topTextW / 2, topY - 6, topTextW, 12);
+    ctx.fillStyle = '#3c6255';
+    ctx.fillText(topText, origin.x + roomW / 2, topY + 3);
+
+    // 2. Left Wall Main Dimension Line
+    const leftX = origin.x - 24;
+    ctx.save();
+    ctx.strokeStyle = '#6e7a75';
+    ctx.fillStyle = '#6e7a75';
+    ctx.beginPath();
+    ctx.moveTo(leftX, origin.y);
+    ctx.lineTo(leftX, origin.y + roomD);
+    ctx.stroke();
+
+    // Extension lines
+    ctx.beginPath();
+    ctx.moveTo(origin.x, origin.y);
+    ctx.lineTo(leftX - 4, origin.y);
+    ctx.moveTo(origin.x, origin.y + roomD);
+    ctx.lineTo(leftX - 4, origin.y + roomD);
+    ctx.stroke();
+
+    drawHash(leftX, origin.y);
+    drawHash(leftX, origin.y + roomD);
+
+    // Left dimension text
+    ctx.fillStyle = '#fbfaf7';
+    const leftText = `${roomConfig.depth.toFixed(2)} m`;
+    const leftTextW = ctx.measureText(leftText).width + 8;
+    ctx.fillRect(leftX - 6, origin.y + roomD / 2 - 6, 12, 12);
+    
+    ctx.translate(leftX + 3, origin.y + roomD / 2);
     ctx.rotate(-Math.PI / 2);
-    ctx.fillText(`${roomConfig.depth}m`, 0, 0);
+    ctx.fillStyle = '#3c6255';
+    ctx.fillText(leftText, 0, 0);
+    ctx.restore();
+
+    // 3. Top wall sub-dimensions (cabinet segments aligned to top wall)
+    const topModules = modules
+      .filter(m => m.position[1] < 0.1)
+      .sort((a, b) => a.position[0] - b.position[0]);
+
+    if (topModules.length > 0) {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(110, 122, 117, 0.4)';
+      ctx.fillStyle = '#6e7a75';
+      ctx.font = '8px Inter, sans-serif';
+      const subY = origin.y - 12;
+
+      let lastX = origin.x;
+      topModules.forEach((m) => {
+        const startX = origin.x + m.position[0] * SCALE;
+        const endX = startX + m.width * SCALE;
+
+        if (startX > lastX + 2) {
+          ctx.beginPath(); ctx.moveTo(lastX, subY); ctx.lineTo(startX, subY); ctx.stroke();
+          drawHash(lastX, subY); drawHash(startX, subY);
+          const midX = (lastX + startX) / 2;
+          const val = ((startX - lastX) / SCALE).toFixed(2);
+          ctx.fillText(`${val}m`, midX, subY - 3);
+        }
+
+        ctx.beginPath(); ctx.moveTo(startX, subY); ctx.lineTo(endX, subY); ctx.stroke();
+        drawHash(startX, subY); drawHash(endX, subY);
+        const midM = (startX + endX) / 2;
+        ctx.fillText(`${m.width.toFixed(2)}m`, midM, subY - 3);
+        
+        lastX = endX;
+      });
+
+      const rightWallX = origin.x + roomW;
+      if (rightWallX > lastX + 2) {
+        ctx.beginPath(); ctx.moveTo(lastX, subY); ctx.lineTo(rightWallX, subY); ctx.stroke();
+        drawHash(lastX, subY); drawHash(rightWallX, subY);
+        const midX = (lastX + rightWallX) / 2;
+        const val = ((rightWallX - lastX) / SCALE).toFixed(2);
+        ctx.fillText(`${val}m`, midX, subY - 3);
+      }
+      ctx.restore();
+    }
+
+    // 4. Centered Room Label & Area (Japandi style badge)
+    const area = roomConfig.width * roomConfig.depth;
+    ctx.save();
+    ctx.fillStyle = 'rgba(251, 250, 247, 0.9)';
+    ctx.strokeStyle = 'rgba(60, 98, 85, 0.15)';
+    ctx.lineWidth = 1;
+    const badgeW = 160;
+    const badgeH = 46;
+    const bx = origin.x + roomW / 2 - badgeW / 2;
+    const by = origin.y + roomD / 2 - badgeH / 2;
+    ctx.beginPath();
+    ctx.roundRect(bx, by, badgeW, badgeH, 6);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#3c6255';
+    ctx.font = 'bold 11px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Modular Kitchen Room', origin.x + roomW / 2, origin.y + roomD / 2 - 4);
+    ctx.fillStyle = '#6e7a75';
+    ctx.font = '10px Inter, sans-serif';
+    ctx.fillText(`${area.toFixed(2)} m² (${roomConfig.width}m × ${roomConfig.depth}m)`, origin.x + roomW / 2, origin.y + roomD / 2 + 12);
     ctx.restore();
 
     // Modules

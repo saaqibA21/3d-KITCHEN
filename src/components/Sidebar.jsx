@@ -179,20 +179,78 @@ export default function Sidebar() {
       return;
     }
     setIsGenerating(true);
-    setTimeout(() => {
-      const newObj = {
-        id: `ai_${Date.now()}`,
-        label: customName,
-        width: customWidth,
-        height: customHeight,
-        depth: customDepth,
-        objectType: customType,
-        imageUrl: customImage
-      };
-      addCustomAiObject(newObj);
-      setIsGenerating(false);
-      alert(`✨ AI Custom Object Generated:\nSuccessfully converted "${customName}" into a 3D model!`);
-    }, 1500);
+
+    const img = new Image();
+    img.src = customImage;
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 64;
+      canvas.height = 64;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, 64, 64);
+      const imgData = ctx.getImageData(0, 0, 64, 64);
+      const data = imgData.data;
+
+      // Extract background color (use top-left pixel)
+      const bgR = data[0], bgG = data[1], bgB = data[2];
+
+      const profile = [];
+      // Scan bottom to top (row 63 down to 0)
+      for (let y = 63; y >= 0; y--) {
+        let firstX = -1;
+        let lastX = -1;
+        for (let x = 0; x < 64; x++) {
+          const idx = (y * 64 + x) * 4;
+          const r = data[idx];
+          const g = data[idx + 1];
+          const b = data[idx + 2];
+          const a = data[idx + 3];
+
+          // Compute color difference from background
+          const diff = Math.sqrt((r - bgR) ** 2 + (g - bgG) ** 2 + (b - bgB) ** 2);
+          if (a > 100 && diff > 35) {
+            if (firstX === -1) firstX = x;
+            lastX = x;
+          }
+        }
+
+        if (firstX !== -1 && lastX !== -1) {
+          const width = lastX - firstX;
+          const radius = width / 2;
+          profile.push(radius);
+        } else {
+          profile.push(profile.length > 0 ? profile[profile.length - 1] : 5);
+        }
+      }
+
+      // Smooth the profile array using a 3-tap moving average filter
+      const smoothed = [];
+      for (let i = 0; i < profile.length; i++) {
+        const prev = i > 0 ? profile[i - 1] : profile[i];
+        const next = i < profile.length - 1 ? profile[i + 1] : profile[i];
+        smoothed.push((prev + profile[i] + next) / 3);
+      }
+
+      // Normalize profile so maximum radius is exactly 0.5 (unit radius)
+      const maxVal = Math.max(...smoothed, 1);
+      const normalizedProfile = smoothed.map(r => r / maxVal * 0.5);
+
+      setTimeout(() => {
+        const newObj = {
+          id: `ai_${Date.now()}`,
+          label: customName,
+          width: customWidth,
+          height: customHeight,
+          depth: customDepth,
+          objectType: customType,
+          imageUrl: customImage,
+          silhouetteProfile: normalizedProfile
+        };
+        addCustomAiObject(newObj);
+        setIsGenerating(false);
+        alert(`✨ AI Custom Object Generated:\nSuccessfully converted "${customName}" into a 3D model!`);
+      }, 1500);
+    };
   };
 
   // Global keyboard shortcuts
@@ -682,7 +740,8 @@ export default function Sidebar() {
                         height: obj.height,
                         depth: obj.depth,
                         customImageUrl: obj.imageUrl,
-                        objectType: obj.objectType
+                        objectType: obj.objectType,
+                        silhouetteProfile: obj.silhouetteProfile
                       })}
                     >
                       ➕ Add to Layout

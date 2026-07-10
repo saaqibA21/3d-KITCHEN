@@ -2,7 +2,7 @@ import React, { useRef, useMemo, useState, useEffect } from 'react';
 import { Entity } from '@playcanvas/react';
 import { Render } from '@playcanvas/react/components';
 import { useMaterial, useApp, useAppEvent } from '@playcanvas/react/hooks';
-import { Vec2, math, BLEND_NORMAL, Texture, PIXELFORMAT_R8_G8_B8_A8 } from 'playcanvas';
+import { Vec2, math, BLEND_NORMAL, Texture, PIXELFORMAT_R8_G8_B8_A8, Mesh, MeshInstance } from 'playcanvas';
 import useKitchenStore from '../store/kitchenStore';
 import { SinkModel, StoveModel, RefrigeratorModel, OvenModel, DishwasherModel } from './Appliances';
 import { getCabinetTexture, getCountertopTexture } from '../utils/textures';
@@ -427,7 +427,96 @@ function useCustomAiMaterial(app, imageUrl) {
 }
 
 // ─── Sub-Models ───
-function LampModel({ w, h, d, customMat, isSelected }) {
+function createLatheMesh(device, profile, segments = 32) {
+  const positions = [];
+  const normals = [];
+  const uvs = [];
+  const indices = [];
+
+  const rows = profile.length;
+
+  for (let r = 0; r < rows; r++) {
+    const radius = profile[r];
+    const y = r / (rows - 1); // 0 to 1
+
+    for (let s = 0; s <= segments; s++) {
+      const angle = (s / segments) * Math.PI * 2;
+      const c = Math.cos(angle);
+      const s_val = Math.sin(angle);
+
+      // Positions
+      positions.push(radius * c, y - 0.5, radius * s_val);
+
+      // Normals
+      normals.push(c, 0, s_val);
+
+      // UVs
+      uvs.push(s / segments, r / (rows - 1));
+    }
+  }
+
+  // Indices
+  for (let r = 0; r < rows - 1; r++) {
+    for (let s = 0; s < segments; s++) {
+      const p0 = r * (segments + 1) + s;
+      const p1 = p0 + 1;
+      const p2 = (r + 1) * (segments + 1) + s;
+      const p3 = p2 + 1;
+
+      // Triangle 1
+      indices.push(p0, p1, p2);
+      // Triangle 2
+      indices.push(p1, p3, p2);
+    }
+  }
+
+  const mesh = new Mesh(device);
+  mesh.setPositions(positions);
+  mesh.setNormals(normals);
+  mesh.setUvs(0, uvs);
+  mesh.setIndices(indices);
+  mesh.update(1); // pc.PRIMITIVE_TRIANGLES is 1
+
+  return mesh;
+}
+
+function LatheMeshRenderer({ profile, w, h, d, material }) {
+  const app = useApp();
+  const ref = useRef();
+
+  useEffect(() => {
+    if (!ref.current || !profile || !profile.length || !material) return;
+    const entity = ref.current;
+
+    const mesh = createLatheMesh(app.graphicsDevice, profile);
+    const meshInstance = new MeshInstance(mesh, material);
+
+    if (entity.render) {
+      entity.removeComponent('render');
+    }
+
+    entity.addComponent('render', {
+      meshInstances: [meshInstance],
+      castShadows: true,
+      receiveShadows: true
+    });
+  }, [app, profile, material]);
+
+  return <Entity ref={ref} scale={[w, h, d]} />;
+}
+
+function LampModel({ w, h, d, customMat, profile, isSelected }) {
+  if (profile && profile.length > 0) {
+    return (
+      <Entity name="custom-lathe-lamp">
+        <Entity position={[0, h / 2, 0]}>
+          <LatheMeshRenderer profile={profile} w={w} h={h} d={d} material={customMat} />
+        </Entity>
+        {isSelected && <SelectionBox width={w} height={h} depth={d} />}
+      </Entity>
+    );
+  }
+
   const blackMat = useMaterial({ diffuse: hexToColor('#1a1a1a'), roughness: 0.6, metalness: 0.1 });
   const goldMat = useMaterial({ diffuse: hexToColor('#e2a85c'), roughness: 0.15, metalness: 0.8 });
   const glowMat = useMaterial({ diffuse: hexToColor('#ffeed6'), emissive: hexToColor('#ffeed6'), emissiveIntensity: 2.0 });
@@ -539,7 +628,7 @@ function CustomAiObjectModel({ mod, isSelected, app }) {
   const neutralMat = useMaterial({ diffuse: hexToColor('#b0b0b0'), roughness: 0.4, metalness: 0.2 });
 
   if (mod.objectType === 'lamp') {
-    return <LampModel w={w} h={h} d={d} customMat={customMat} isSelected={isSelected} />;
+    return <LampModel w={w} h={h} d={d} customMat={customMat} profile={mod.silhouetteProfile} isSelected={isSelected} />;
   }
   if (mod.objectType === 'stool') {
     return <StoolModel w={w} h={h} d={d} customMat={customMat} isSelected={isSelected} />;
