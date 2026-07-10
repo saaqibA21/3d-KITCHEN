@@ -1,0 +1,17 @@
+.viewport-2d,
+.viewport-3d {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.app-viewport {
+  position: relative;
+  background: var(--bg-primary);
+}
+
+.app-viewport.full-view {
+  position: relative;
+}

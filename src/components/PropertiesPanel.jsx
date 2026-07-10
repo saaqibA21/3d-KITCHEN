@@ -1,0 +1,266 @@
+import React, { useRef } from 'react';
+import useKitchenStore from '../store/kitchenStore';
+import './PropertiesPanel.css';
+
+const COUNTERTOPS = [
+  { value: 'granite', label: 'Granite', icon: '🪨', gradient: 'radial-gradient(circle, #5c5c5c 10%, #2b2b2b 80%)' },
+  { value: 'marble', label: 'Marble', icon: '⚪', gradient: 'linear-gradient(135deg, #f5f5f5 25%, #e0e0e0 50%, #f5f5f5 75%)' },
+  { value: 'quartz', label: 'Quartz', icon: '💎', gradient: 'linear-gradient(135deg, #e6f2ff, #ffffff)' },
+  { value: 'laminate', label: 'Laminate', icon: '🪵', gradient: 'linear-gradient(45deg, #a0522d, #8b4513)' },
+];
+
+const PRESET_COLORS = [
+  '#f5f0e8', '#e8dcc8', '#d4c5b0',
+  '#2d2d2d', '#1a1a2e', '#c8e8d4',
+  '#c8d4e8', '#f0e6d3',
+];
+
+const CUSTOMIZER_CATEGORIES = [
+  { id: 'matte',      label: 'Matte',      icon: '🎨', gradient: 'radial-gradient(circle, #cbd5e1 10%, #475569 90%)' },
+  { id: 'glossy',     label: 'Glossy',     icon: '✨', gradient: 'linear-gradient(135deg, #e2a85c, #0a0c10)' },
+  { id: 'wood_grain', label: 'Wood',       icon: '🪵', gradient: 'linear-gradient(45deg, #8b5a2b, #5c3a21)' },
+  { id: 'concrete',   label: 'Concrete',   icon: '🪨', gradient: 'linear-gradient(135deg, #708090, #2f4f4f)' },
+];
+
+export default function PropertiesPanel() {
+  const { getSelectedModule, updateModule, removeModule, selectedId, setSelectedId, toggleDoor } = useKitchenStore();
+  const fileInputRef = useRef();
+  const { saveDesign, loadDesign, clearAll, modules } = useKitchenStore();
+  const mod = getSelectedModule();
+
+  const handleLoad = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => loadDesign(ev.target.result);
+    reader.readAsText(file);
+  };
+
+  return (
+    <div className="props-panel animate-slide-right">
+      <div className="props-header">
+        <span className="props-header-icon">⚙️</span>
+        <span>Properties</span>
+      </div>
+
+      <div className="props-scroll">
+        {mod ? (
+          <div className="props-body animate-fade-in" key={mod.id}>
+            {/* Header: Back & Close Buttons */}
+            <div className="mc-header-row">
+              <button className="mc-back-btn" onClick={() => setSelectedId(null)}>
+                <span>◀</span> Back
+              </button>
+              <span className="badge">{mod.label}</span>
+              <button className="mc-close-btn" onClick={() => setSelectedId(null)}>✕</button>
+            </div>
+
+            {/* Split layout Customizer */}
+            <div className="material-customizer">
+              {/* Left Column: Material finish categories */}
+              <div className="mc-left-panel">
+                {CUSTOMIZER_CATEGORIES.map((cat) => (
+                  <button
+                    key={cat.id}
+                    className={`mc-category-btn ${mod.material === cat.id ? 'active' : ''}`}
+                    onClick={() => updateModule(mod.id, { material: cat.id })}
+                  >
+                    <div className="mc-thumbnail" style={{ background: cat.gradient }}>
+                      {mod.material === cat.id && cat.icon}
+                    </div>
+                    <span className="mc-label">{cat.label}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Right Column: Custom Tint, Swatches, Scale, Rotation */}
+              <div className="mc-right-panel">
+                {/* Tint Colour display */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                  <label className="label" style={{ margin: 0 }}>Tint Colour</label>
+                  <div style={{ width: 28, height: 16, borderRadius: 4, background: mod.color, border: '1px solid var(--border-subtle)' }} />
+                </div>
+
+                {/* Swatches Grid */}
+                <div className="mc-grid">
+                  {PRESET_COLORS.map((c) => (
+                    <button
+                      key={c}
+                      className={`mc-swatch ${mod.color === c ? 'active' : ''}`}
+                      style={{ background: c }}
+                      onClick={() => updateModule(mod.id, { color: c })}
+                    />
+                  ))}
+                  {/* Plus Custom Color Picker button */}
+                  <div className="mc-add-swatch" style={{ position: 'relative' }}>
+                    <span>+</span>
+                    <input
+                      type="color"
+                      value={mod.color}
+                      onChange={(e) => updateModule(mod.id, { color: e.target.value })}
+                      style={{ position: 'absolute', opacity: 0, width: '100%', height: '100%', cursor: 'pointer', left: 0, top: 0 }}
+                    />
+                  </div>
+                </div>
+
+                {/* Texture Scale Slider */}
+                <div className="form-row">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <label className="label" style={{ margin: 0 }}>Texture Scale</label>
+                    <span className="slider-value" style={{ fontSize: '0.68rem', minWidth: 'auto' }}>
+                      {Math.round((mod.textureScale || 1.0) * 100)}%
+                    </span>
+                  </div>
+                  <input
+                    type="range" min="0.2" max="3.0" step="0.1"
+                    value={mod.textureScale || 1.0}
+                    onChange={(e) => updateModule(mod.id, { textureScale: parseFloat(e.target.value) })}
+                  />
+                </div>
+
+                {/* Texture Rotation Slider */}
+                <div className="form-row">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <label className="label" style={{ margin: 0 }}>Texture Rotation</label>
+                    <span className="slider-value" style={{ fontSize: '0.68rem', minWidth: 'auto' }}>
+                      {mod.textureRotation || 0}°
+                    </span>
+                  </div>
+                  <input
+                    type="range" min="0" max="360" step="15"
+                    value={mod.textureRotation || 0}
+                    onChange={(e) => updateModule(mod.id, { textureRotation: parseInt(e.target.value) })}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="divider" style={{ margin: '14px 0 10px 0' }} />
+
+            {/* Countertop Section (only for base + island + appliances with countertops) */}
+            {['base_cabinet', 'corner_base', 'drawer_unit', 'island', 'sink', 'stove', 'dishwasher'].includes(mod.type) && (
+              <div className="props-group">
+                <label className="label">Countertop Material</label>
+                <div className="mc-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                  {COUNTERTOPS.map((ct) => (
+                    <button
+                      key={ct.value}
+                      className={`mc-swatch ${mod.countertop === ct.value ? 'active' : ''}`}
+                      style={{ background: ct.gradient, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem' }}
+                      title={ct.label}
+                      onClick={() => updateModule(mod.id, { countertop: ct.value })}
+                    >
+                      {mod.countertop === ct.value && ct.icon}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="divider" style={{ margin: '6px 0 10px 0' }} />
+
+            {/* Collapsible/Compact Dimensions */}
+            <div className="props-group">
+              <label className="label">Dimensions</label>
+              <div className="dims-grid">
+                <div className="dim-field">
+                  <span className="dim-label">Width</span>
+                  <input
+                    type="number" min={0.3} max={3} step={0.05}
+                    value={parseFloat(mod.width.toFixed(2))}
+                    onChange={(e) => updateModule(mod.id, { width: parseFloat(e.target.value) })}
+                  />
+                </div>
+                <div className="dim-field">
+                  <span className="dim-label">Depth</span>
+                  <input
+                    type="number" min={0.3} max={2} step={0.05}
+                    value={parseFloat(mod.depth.toFixed(2))}
+                    onChange={(e) => updateModule(mod.id, { depth: parseFloat(e.target.value) })}
+                  />
+                </div>
+                <div className="dim-field">
+                  <span className="dim-label">Height</span>
+                  <input
+                    type="number" min={0.3} max={3} step={0.05}
+                    value={parseFloat(mod.height.toFixed(2))}
+                    onChange={(e) => updateModule(mod.id, { height: parseFloat(e.target.value) })}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Rotation Row */}
+            <div className="props-group">
+              <label className="label">Cabinet Rotation</label>
+              <div className="rotation-row">
+                {[0, 90, 180, 270].map((r) => (
+                  <button
+                    key={r}
+                    className={`rotation-btn ${mod.rotation === r ? 'active' : ''}`}
+                    onClick={() => updateModule(mod.id, { rotation: r })}
+                  >
+                    {r}°
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Door Action */}
+            {['base_cabinet','wall_cabinet','tall_cabinet','glass_cabinet'].includes(mod.type) && (
+              <div className="props-group" style={{ marginBottom: 12 }}>
+                <button
+                  className={`btn-secondary ${mod.doorOpen ? 'active-green' : ''}`}
+                  style={{ width: '100%', justifyContent: 'center' }}
+                  onClick={() => toggleDoor(mod.id)}
+                >
+                  {mod.doorOpen ? '🚪 Close Door' : '🚪 Open Door'}
+                </button>
+              </div>
+            )}
+
+            {/* Delete */}
+            <button className="btn-danger" style={{ width: '100%', justifyContent: 'center', marginTop: 6 }} onClick={() => removeModule(mod.id)}>
+              🗑️ Remove Cabinet
+            </button>
+          </div>
+        ) : (
+          <div className="empty-state">
+            <div className="empty-state-icon">🖱️</div>
+            <p>Click any module in the floor plan or 3D view to edit its properties</p>
+          </div>
+        )}
+
+        <div className="divider" />
+
+        {/* Design Actions */}
+        <div className="props-group">
+          <label className="label">Design ({modules.length} modules)</label>
+          <div className="action-buttons">
+            <button className="btn-primary" style={{ width: '100%', justifyContent: 'center' }} onClick={saveDesign}>
+              💾 Save Design
+            </button>
+            <button className="btn-secondary" style={{ width: '100%', justifyContent: 'center' }} onClick={() => fileInputRef.current?.click()}>
+              📂 Load Design
+            </button>
+            <input ref={fileInputRef} type="file" accept=".json" style={{ display: 'none' }} onChange={handleLoad} />
+            <button className="btn-danger" style={{ width: '100%', justifyContent: 'center' }} onClick={() => { if (confirm('Clear all modules?')) clearAll(); }}>
+              🗑️ Clear All
+            </button>
+          </div>
+        </div>
+
+        {/* Tips */}
+        <div className="props-tips">
+          <div className="tip-title">💡 Tips</div>
+          <ul className="tip-list">
+            <li>Double-click in 2D view to rotate</li>
+            <li>Drag modules to reposition</li>
+            <li>WASD + mouse in walkthrough</li>
+            <li>Click canvas to deselect</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+}
