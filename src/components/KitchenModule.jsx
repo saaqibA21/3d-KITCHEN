@@ -2,7 +2,7 @@ import React, { useRef, useMemo, useState, useEffect } from 'react';
 import { Entity } from '@playcanvas/react';
 import { Render } from '@playcanvas/react/components';
 import { useMaterial, useApp, useAppEvent } from '@playcanvas/react/hooks';
-import { Vec2, math, BLEND_NORMAL, Texture } from 'playcanvas';
+import { Vec2, math, BLEND_NORMAL, Texture, PIXELFORMAT_R8_G8_B8_A8 } from 'playcanvas';
 import useKitchenStore from '../store/kitchenStore';
 import { SinkModel, StoveModel, RefrigeratorModel, OvenModel, DishwasherModel } from './Appliances';
 import { getCabinetTexture, getCountertopTexture } from '../utils/textures';
@@ -409,7 +409,7 @@ function useCustomAiMaterial(app, imageUrl) {
       const tex = new Texture(app.graphicsDevice, {
         width: img.width,
         height: img.height,
-        format: 1, // PIXELFORMAT_RGBA8
+        format: PIXELFORMAT_R8_G8_B8_A8,
         autoMipmap: true
       });
       tex.setSource(img);
