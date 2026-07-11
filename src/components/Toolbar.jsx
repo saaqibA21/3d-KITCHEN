@@ -1,4 +1,4 @@
-import React, { useRef, useCallback } from 'react';
+import React, { useRef, useCallback, useState } from 'react';
 import useKitchenStore from '../store/kitchenStore';
 import './Toolbar.css';
 
@@ -121,6 +121,185 @@ function ScreenshotButton() {
   );
 }
 
+// ─── CAD Blueprints DXF Exporter ─────────────────────────────────────────────
+function exportToDXF(roomConfig, modules, rooms) {
+  let dxf = [];
+  
+  dxf.push("0", "SECTION", "2", "HEADER", "9", "$ACADVER", "1", "AC1006", "0", "ENDSEC");
+  dxf.push("0", "SECTION", "2", "ENTITIES");
+
+  const drawLine = (x1, y1, x2, y2, layer) => {
+    dxf.push("0", "LINE");
+    dxf.push("8", layer);
+    dxf.push("10", x1.toFixed(3));
+    dxf.push("20", y1.toFixed(3));
+    dxf.push("30", "0.0");
+    dxf.push("11", x2.toFixed(3));
+    dxf.push("21", y2.toFixed(3));
+    dxf.push("31", "0.0");
+  };
+
+  const drawRect = (x, y, w, d, rotation, layer) => {
+    const rad = (-rotation * Math.PI) / 180;
+    const cos = Math.cos(rad);
+    const sin = Math.sin(rad);
+
+    const pts = [
+      { dx: -w/2, dy: -d/2 },
+      { dx: w/2, dy: -d/2 },
+      { dx: w/2, dy: d/2 },
+      { dx: -w/2, dy: d/2 }
+    ];
+
+    const wpts = pts.map(p => ({
+      x: x + (p.dx * cos - p.dy * sin),
+      y: y + (p.dx * sin + p.dy * cos)
+    }));
+
+    drawLine(wpts[0].x, wpts[0].y, wpts[1].x, wpts[1].y, layer);
+    drawLine(wpts[1].x, wpts[1].y, wpts[2].x, wpts[2].y, layer);
+    drawLine(wpts[2].x, wpts[2].y, wpts[3].x, wpts[3].y, layer);
+    drawLine(wpts[3].x, wpts[3].y, wpts[0].x, wpts[0].y, layer);
+  };
+
+  const drawText = (x, y, text, height, layer) => {
+    dxf.push("0", "TEXT");
+    dxf.push("8", layer);
+    dxf.push("10", x.toFixed(3));
+    dxf.push("20", y.toFixed(3));
+    dxf.push("30", "0.0");
+    dxf.push("40", height.toFixed(3));
+    dxf.push("1", text);
+  };
+
+  const rw = roomConfig.width;
+  const rd = roomConfig.depth;
+  drawLine(0, 0, rw, 0, "WALLS_OUTER");
+  drawLine(rw, 0, rw, rd, "WALLS_OUTER");
+  drawLine(rw, rd, 0, rd, "WALLS_OUTER");
+  drawLine(0, rd, 0, 0, "WALLS_OUTER");
+
+  rooms.forEach((rm) => {
+    const rx = rm.position[0] + rm.width / 2;
+    const ry = rd - (rm.position[1] + rm.depth / 2);
+    drawRect(rx, ry, rm.width, rm.depth, 0, "ROOM_ZONES");
+    drawText(rm.position[0] + 0.1, rd - rm.position[1] - 0.25, `${rm.label} (${(rm.width * rm.depth).toFixed(1)}m2)`, 0.12, "ROOM_LABELS");
+  });
+
+  modules.forEach((mod) => {
+    const mx = mod.position[0] + mod.width / 2;
+    const my = rd - (mod.position[1] + mod.depth / 2);
+    const layerName = mod.isFixture ? "ARCHITECTURAL_FIXTURES" : "FURNITURE_MODULES";
+    drawRect(mx, my, mod.width, mod.depth, mod.rotation, layerName);
+    drawText(mod.position[0] + 0.05, rd - mod.position[1] - 0.2, `${mod.label}`, 0.08, "OBJECT_LABELS");
+  });
+
+  dxf.push("0", "ENDSEC", "0", "EOF");
+
+  const content = dxf.join("\n");
+  const blob = new Blob([content], { type: "application/dxf" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `room_layout_draft.dxf`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+// ─── 3D CAD Mesh OBJ Exporter ────────────────────────────────────────────────
+function exportToOBJ(roomConfig, modules) {
+  let obj = [];
+  let vertexOffset = 1;
+
+  obj.push("# KitchenCraft 3D CAD Exporter");
+  obj.push("# Units: Meters");
+
+  const addBox = (name, x, y, z, w, h, d, rotationY) => {
+    obj.push(`g ${name}`);
+    const halfW = w / 2;
+    const halfH = h / 2;
+    const halfD = d / 2;
+
+    const localVertices = [
+      { x: -halfW, y: -halfH, z: -halfD },
+      { x: halfW, y: -halfH, z: -halfD },
+      { x: halfW, y: halfH, z: -halfD },
+      { x: -halfW, y: halfH, z: -halfD },
+      { x: -halfW, y: -halfH, z: halfD },
+      { x: halfW, y: -halfH, z: halfD },
+      { x: halfW, y: halfH, z: halfD },
+      { x: -halfW, y: halfH, z: halfD }
+    ];
+
+    const rad = (rotationY * Math.PI) / 180;
+    const cos = Math.cos(rad);
+    const sin = Math.sin(rad);
+
+    localVertices.forEach(v => {
+      const rx = v.x * cos - v.z * sin;
+      const rz = v.x * sin + v.z * cos;
+      const wx = x + rx;
+      const wy = y + v.y;
+      const wz = z + rz;
+      obj.push(`v ${wx.toFixed(4)} ${wy.toFixed(4)} ${wz.toFixed(4)}`);
+    });
+
+    const faces = [
+      [1, 2, 3, 4],
+      [5, 8, 7, 6],
+      [1, 5, 6, 2],
+      [4, 3, 7, 8],
+      [1, 4, 8, 5],
+      [2, 6, 7, 3]
+    ];
+
+    faces.forEach(f => {
+      obj.push(`f ${f[0] + vertexOffset} ${f[1] + vertexOffset} ${f[2] + vertexOffset} ${f[3] + vertexOffset}`);
+    });
+
+    vertexOffset += 8;
+  };
+
+  const rw = roomConfig.width;
+  const rd = roomConfig.depth;
+  const rh = roomConfig.height;
+
+  addBox("Room_Floor", 0, -0.01, 0, rw, 0.02, rd, 0);
+  addBox("Wall_Back", 0, rh / 2, -rd / 2 - 0.01, rw, rh, 0.02, 0);
+  addBox("Wall_Left", -rw / 2 - 0.01, rh / 2, 0, 0.02, rh, rd, 0);
+  addBox("Wall_Right", rw / 2 + 0.01, rh / 2, 0, 0.02, rh, rd, 0);
+
+  modules.forEach(mod => {
+    const wx = mod.position[0] - rw / 2 + mod.width / 2;
+    const wz = mod.position[1] - rd / 2 + mod.depth / 2;
+    const wy = mod.type.includes('wall') || mod.type === 'glass_cabinet' || mod.type === 'open_shelf' || mod.type === 'wine_rack' ? 1.45 + mod.height / 2 : mod.height / 2;
+
+    addBox(
+      `${mod.type}_${mod.id}`,
+      wx,
+      wy,
+      wz,
+      mod.width,
+      mod.height,
+      mod.depth,
+      mod.rotation
+    );
+  });
+
+  const content = obj.join("\n");
+  const blob = new Blob([content], { type: "model/obj" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `room_layout_3d.obj`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
 export default function Toolbar() {
   const {
     viewMode, setViewMode,
@@ -130,7 +309,10 @@ export default function Toolbar() {
     lightingMood, setLightingMood,
     showMeasurements, toggleMeasurements,
     history, historyIndex,
+    rooms, roomConfig
   } = useKitchenStore();
+  
+  const [exportOpen, setExportOpen] = useState(false);
 
   const views = [
     { id: 'plan', label: '2D Plan', icon: <IconPlan /> },
@@ -243,6 +425,28 @@ export default function Toolbar() {
           <span className="stat-num">{modules.length}</span>
           <span className="stat-label">modules</span>
         </div>
+        <div style={{ position: 'relative' }}>
+          <button className="btn-secondary" onClick={() => setExportOpen(!exportOpen)} id="btn-export" style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            <span>📤</span> Export CAD
+          </button>
+          {exportOpen && (
+            <div className="export-dropdown animate-scale-in">
+              <button
+                className="export-dropdown-item"
+                onClick={() => { exportToDXF(roomConfig, modules, rooms); setExportOpen(false); }}
+              >
+                📐 AutoCAD Blueprint (.DXF)
+              </button>
+              <button
+                className="export-dropdown-item"
+                onClick={() => { exportToOBJ(roomConfig, modules); setExportOpen(false); }}
+              >
+                📦 3D CAD Mesh (.OBJ)
+              </button>
+            </div>
+          )}
+        </div>
+
         <button className="btn-primary" id="btn-save" onClick={saveDesign}>
           <IconSave style={{ marginRight: 6 }} /> Save
         </button>
