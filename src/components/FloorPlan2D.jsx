@@ -24,7 +24,8 @@ export default function FloorPlan2D() {
   const { 
     roomConfig, modules, selectedId, setSelectedId, updateModule,
     blueprintUrl, blueprintOpacity, calibrationMode, calibrationPoints,
-    addCalibrationPoint, calibrateScale 
+    addCalibrationPoint, calibrateScale,
+    rooms, updateRoomZone, removeRoomZone
   } = useKitchenStore();
   const [dragging, setDragging] = useState(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -285,6 +286,36 @@ export default function FloorPlan2D() {
     ctx.fillText(`${area.toFixed(2)} m² (${roomConfig.width}m × ${roomConfig.depth}m)`, origin.x + roomW / 2, origin.y + roomD / 2 + 12);
     ctx.restore();
 
+    // Room Zones
+    rooms.forEach((rm) => {
+      const rx = origin.x + rm.position[0] * SCALE;
+      const ry = origin.y + rm.position[1] * SCALE;
+      const rw = rm.width * SCALE;
+      const rh = rm.depth * SCALE;
+
+      ctx.save();
+      ctx.fillStyle = rm.color || 'rgba(60, 98, 85, 0.04)';
+      ctx.fillRect(rx, ry, rw, rh);
+
+      ctx.strokeStyle = selectedId === rm.id ? '#3c6255' : 'rgba(60, 98, 85, 0.25)';
+      ctx.lineWidth = selectedId === rm.id ? 2 : 1;
+      ctx.setLineDash([4, 4]);
+      ctx.strokeRect(rx, ry, rw, rh);
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = '#3c6255';
+      ctx.font = 'bold 10px Inter, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(rm.label, rx + rw / 2, ry + rh / 2 - 5);
+      
+      ctx.fillStyle = '#6e7a75';
+      ctx.font = '8px Inter, sans-serif';
+      const rmArea = rm.width * rm.depth;
+      ctx.fillText(`${rmArea.toFixed(1)} m²`, rx + rw / 2, ry + rh / 2 + 6);
+      ctx.restore();
+    });
+
     // Modules
     modules.forEach((mod) => {
       const mx = origin.x + mod.position[0] * SCALE;
@@ -300,13 +331,95 @@ export default function FloorPlan2D() {
       ctx.rotate((mod.rotation * Math.PI) / 180);
       ctx.translate(-(mw / 2), -(mh / 2));
 
-      // Shadow
+      // ── CUSTOM SYMBOLS OVERRIDES ──
+      if (mod.type === 'door') {
+        ctx.strokeStyle = '#3c6255';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(0, mh, mw, 1.5 * Math.PI, 2 * Math.PI);
+        ctx.stroke();
+        
+        ctx.beginPath();
+        ctx.moveTo(0, mh);
+        ctx.lineTo(mw, mh);
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        
+        ctx.restore();
+        return;
+      }
+
+      if (mod.type === 'window') {
+        ctx.fillStyle = 'rgba(212, 232, 240, 0.6)';
+        ctx.fillRect(0, 0, mw, mh);
+        ctx.strokeStyle = '#3c6255';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(0, 0, mw, mh);
+        
+        ctx.beginPath();
+        ctx.moveTo(0, mh / 2);
+        ctx.lineTo(mw, mh / 2);
+        ctx.stroke();
+        
+        ctx.restore();
+        return;
+      }
+
+      if (mod.type === 'stairs') {
+        ctx.fillStyle = '#e2d3c0';
+        ctx.fillRect(0, 0, mw, mh);
+        ctx.strokeStyle = '#3c6255';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(0, 0, mw, mh);
+        
+        const stepCount = 8;
+        const stepW = mw / stepCount;
+        for (let i = 1; i < stepCount; i++) {
+          ctx.beginPath();
+          ctx.moveTo(i * stepW, 0);
+          ctx.lineTo(i * stepW, mh);
+          ctx.stroke();
+        }
+        
+        ctx.strokeStyle = '#3c6255';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(10, mh / 2);
+        ctx.lineTo(mw - 10, mh / 2);
+        ctx.lineTo(mw - 16, mh / 2 - 4);
+        ctx.moveTo(mw - 10, mh / 2);
+        ctx.lineTo(mw - 16, mh / 2 + 4);
+        ctx.stroke();
+        
+        ctx.restore();
+        return;
+      }
+
+      if (mod.type === 'partition') {
+        ctx.fillStyle = '#eae3da';
+        ctx.fillRect(0, 0, mw, mh);
+        ctx.strokeStyle = '#3c6255';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(0, 0, mw, mh);
+        
+        ctx.strokeStyle = 'rgba(60, 98, 85, 0.2)';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < mw + mh; i += 12) {
+          ctx.beginPath();
+          ctx.moveTo(i, 0);
+          ctx.lineTo(i - mh, mh);
+          ctx.stroke();
+        }
+        
+        ctx.restore();
+        return;
+      }
+
       if (isSelected || isHovered) {
         ctx.shadowColor = isSelected ? 'rgba(60, 98, 85, 0.35)' : 'rgba(60, 98, 85, 0.08)';
         ctx.shadowBlur = 12;
       }
 
-      // Fill
       const baseColor = TYPE_COLORS[mod.type] || '#888';
       ctx.fillStyle = isSelected
         ? baseColor
@@ -315,14 +428,12 @@ export default function FloorPlan2D() {
         : baseColor + '99';
       ctx.fillRect(0, 0, mw, mh);
 
-      // Border
       ctx.strokeStyle = isSelected ? '#3c6255' : isHovered ? 'rgba(60, 98, 85, 0.5)' : 'rgba(60, 98, 85, 0.15)';
       ctx.lineWidth = isSelected ? 2 : 1;
       ctx.strokeRect(0, 0, mw, mh);
 
       ctx.shadowBlur = 0;
 
-      // Label
       ctx.fillStyle = '#1e2522';
       ctx.font = `${isSelected ? 700 : 500} 9px Inter, sans-serif`;
       ctx.textAlign = 'center';
@@ -330,7 +441,6 @@ export default function FloorPlan2D() {
       const label = mod.label.length > 10 ? mod.label.substring(0, 8) + '…' : mod.label;
       ctx.fillText(label, mw / 2, mh / 2);
 
-      // Size label
       ctx.fillStyle = 'rgba(30, 37, 34, 0.5)';
       ctx.font = '7px Inter, sans-serif';
       ctx.fillText(`${Math.round(mod.width * 100)}×${Math.round(mod.depth * 100)}cm`, mw / 2, mh / 2 + 10);
@@ -383,6 +493,21 @@ export default function FloorPlan2D() {
     return null;
   }, [modules, getRoomOrigin]);
 
+  const getRoomZoneAtPoint = useCallback((px, py) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return null;
+    const origin = getRoomOrigin(canvas);
+    for (let i = rooms.length - 1; i >= 0; i--) {
+      const rm = rooms[i];
+      const rx = origin.x + rm.position[0] * SCALE;
+      const ry = origin.y + rm.position[1] * SCALE;
+      const rw = rm.width * SCALE;
+      const rh = rm.depth * SCALE;
+      if (px >= rx && px <= rx + rw && py >= ry && py <= ry + rh) return rm;
+    }
+    return null;
+  }, [rooms, getRoomOrigin]);
+
   const snapToGrid = (val) => Math.round(val / (GRID_SIZE / SCALE)) * (GRID_SIZE / SCALE);
 
   const handleMouseDown = (e) => {
@@ -412,14 +537,26 @@ export default function FloorPlan2D() {
     if (mod) {
       const canvas = canvasRef.current;
       const origin = getRoomOrigin(canvas);
-      setDragging(mod.id);
+      setDragging({ type: 'module', id: mod.id });
       setDragOffset({
         x: px - (origin.x + mod.position[0] * SCALE),
         y: py - (origin.y + mod.position[1] * SCALE),
       });
       setSelectedId(mod.id);
     } else {
-      setSelectedId(null);
+      const rm = getRoomZoneAtPoint(px, py);
+      if (rm) {
+        const canvas = canvasRef.current;
+        const origin = getRoomOrigin(canvas);
+        setDragging({ type: 'room', id: rm.id });
+        setDragOffset({
+          x: px - (origin.x + rm.position[0] * SCALE),
+          y: py - (origin.y + rm.position[1] * SCALE),
+        });
+        setSelectedId(rm.id);
+      } else {
+        setSelectedId(null);
+      }
     }
   };
 
@@ -431,15 +568,25 @@ export default function FloorPlan2D() {
     if (dragging) {
       const canvas = canvasRef.current;
       const origin = getRoomOrigin(canvas);
-      const mod = modules.find((m) => m.id === dragging);
-      if (!mod) return;
-      let nx = (px - dragOffset.x - origin.x) / SCALE;
-      let ny = (py - dragOffset.y - origin.y) / SCALE;
-      nx = snapToGrid(Math.max(0, Math.min(roomConfig.width - mod.width, nx)));
-      ny = snapToGrid(Math.max(0, Math.min(roomConfig.depth - mod.depth, ny)));
-      updateModule(dragging, { position: [nx, ny] });
+      if (dragging.type === 'module') {
+        const mod = modules.find((m) => m.id === dragging.id);
+        if (!mod) return;
+        let nx = (px - dragOffset.x - origin.x) / SCALE;
+        let ny = (py - dragOffset.y - origin.y) / SCALE;
+        nx = snapToGrid(Math.max(0, Math.min(roomConfig.width - mod.width, nx)));
+        ny = snapToGrid(Math.max(0, Math.min(roomConfig.depth - mod.depth, ny)));
+        updateModule(dragging.id, { position: [nx, ny] });
+      } else if (dragging.type === 'room') {
+        const rm = rooms.find((r) => r.id === dragging.id);
+        if (!rm) return;
+        let nx = (px - dragOffset.x - origin.x) / SCALE;
+        let ny = (py - dragOffset.y - origin.y) / SCALE;
+        nx = snapToGrid(Math.max(0, Math.min(roomConfig.width - rm.width, nx)));
+        ny = snapToGrid(Math.max(0, Math.min(roomConfig.depth - rm.depth, ny)));
+        updateRoomZone(dragging.id, { position: [nx, ny] });
+      }
     } else {
-      const hovered = getModuleAtPoint(px, py);
+      const hovered = getModuleAtPoint(px, py) || getRoomZoneAtPoint(px, py);
       setHoveredId(hovered ? hovered.id : null);
     }
   };

@@ -665,6 +665,118 @@ function CustomAiObjectModel({ mod, isSelected, app }) {
   );
 }
 
+// ─── Architectural Sub-Models ───
+function DoorModel3D({ mod, isSelected, app }) {
+  const { w, h, d } = { w: mod.width, h: mod.height, d: mod.depth };
+  const frameMat = useMaterial({ diffuse: hexToColor('#cccccc'), roughness: 0.5 });
+  const panelMat = useMaterial({ diffuse: hexToColor('#e8ebe9'), roughness: 0.6 });
+
+  const frameThick = 0.04;
+  const openAngle = mod.doorOpen ? 90 : 0;
+
+  return (
+    <Entity name="3d-door">
+      <Entity position={[0, h - frameThick / 2, 0]} scale={[w, frameThick, d]}>
+        <Render type="box" material={frameMat} castShadows />
+      </Entity>
+      <Entity position={[-w / 2 + frameThick / 2, h / 2, 0]} scale={[frameThick, h, d]}>
+        <Render type="box" material={frameMat} castShadows />
+      </Entity>
+      <Entity position={[w / 2 - frameThick / 2, h / 2, 0]} scale={[frameThick, h, d]}>
+        <Render type="box" material={frameMat} castShadows />
+      </Entity>
+
+      <Entity position={[-w / 2 + frameThick, 0, 0]} rotation={[0, openAngle, 0]}>
+        <Entity position={[(w - frameThick * 2) / 2, h / 2, 0]} scale={[w - frameThick * 2, h - frameThick, 0.04]}>
+          <Render type="box" material={panelMat} castShadows />
+        </Entity>
+      </Entity>
+
+      {isSelected && <SelectionBox width={w} height={h} depth={d} />}
+    </Entity>
+  );
+}
+
+function WindowModel3D({ mod, isSelected, app }) {
+  const { w, h, d } = { w: mod.width, h: mod.height, d: mod.depth };
+  const frameMat = useMaterial({ diffuse: hexToColor('#b8c0ba'), roughness: 0.3, metalness: 0.5 });
+  const glassMat = useMaterial({
+    diffuse: hexToColor('#d4e8f0'),
+    opacity: 0.45,
+    blendType: BLEND_NORMAL,
+    roughness: 0.1,
+    metalness: 0.9
+  });
+
+  const frameThick = 0.06;
+
+  return (
+    <Entity name="3d-window">
+      <Entity position={[0, frameThick / 2, 0]} scale={[w, frameThick, d]}>
+        <Render type="box" material={frameMat} castShadows />
+      </Entity>
+      <Entity position={[0, h - frameThick / 2, 0]} scale={[w, frameThick, d]}>
+        <Render type="box" material={frameMat} castShadows />
+      </Entity>
+      <Entity position={[-w / 2 + frameThick / 2, h / 2, 0]} scale={[frameThick, h, d]}>
+        <Render type="box" material={frameMat} castShadows />
+      </Entity>
+      <Entity position={[w / 2 - frameThick / 2, h / 2, 0]} scale={[frameThick, h, d]}>
+        <Render type="box" material={frameMat} castShadows />
+      </Entity>
+
+      <Entity position={[0, h / 2, 0]} scale={[w - frameThick * 2, h - frameThick * 2, 0.02]}>
+        <Render type="box" material={glassMat} />
+      </Entity>
+
+      {isSelected && <SelectionBox width={w} height={h} depth={d} />}
+    </Entity>
+  );
+}
+
+function StairsModel3D({ mod, isSelected, app }) {
+  const { w, h, d } = { w: mod.width, h: mod.height, d: mod.depth };
+  const woodMat = useMaterial({ diffuse: hexToColor('#a28c70'), roughness: 0.6 });
+
+  const stepsCount = 10;
+  const stepH = h / stepsCount;
+  const stepD = d / stepsCount;
+
+  return (
+    <Entity name="3d-stairs">
+      {Array.from({ length: stepsCount }).map((_, i) => {
+        const currentH = (i + 1) * stepH;
+        const sy = currentH / 2;
+        const sz = -d / 2 + (i * stepD) + stepD / 2;
+        return (
+          <Entity
+            key={i}
+            position={[0, sy, sz]}
+            scale={[w, currentH, stepD]}
+          >
+            <Render type="box" material={woodMat} castShadows receiveShadows />
+          </Entity>
+        );
+      })}
+      {isSelected && <SelectionBox width={w} height={h} depth={d} />}
+    </Entity>
+  );
+}
+
+function PartitionModel3D({ mod, isSelected, app }) {
+  const { w, h, d } = { w: mod.width, h: mod.height, d: mod.depth };
+  const wallMat = useMaterial({ diffuse: hexToColor('#eae3da'), roughness: 0.9 });
+
+  return (
+    <Entity name="3d-partition">
+      <Entity position={[0, h / 2, 0]} scale={[w, h, d]}>
+        <Render type="box" material={wallMat} castShadows receiveShadows />
+      </Entity>
+      {isSelected && <SelectionBox width={w} height={h} depth={d} />}
+    </Entity>
+  );
+}
+
 // ─── Renderer Map ─────────────────────────────────────────────────────────────
 const CABINET_MAP = {
   base_cabinet: BaseCabinet,
@@ -678,6 +790,10 @@ const CABINET_MAP = {
   wine_rack:    WineRack,
   range_hood:   RangeHood,
   custom_ai_object: CustomAiObjectModel,
+  door:         DoorModel3D,
+  window:       WindowModel3D,
+  stairs:       StairsModel3D,
+  partition:    PartitionModel3D,
 };
 
 const APPLIANCE_MAP = {

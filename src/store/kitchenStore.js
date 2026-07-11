@@ -18,6 +18,12 @@ const MODULE_DEFAULTS = {
   refrigerator:    { width: 0.75, height: 1.8,  depth: 0.7,  color: '#d0d0d0', material: 'glossy',    countertop: null,      label: 'Refrigerator',  isAppliance: true },
   oven:            { width: 0.6,  height: 0.6,  depth: 0.55, color: '#222222', material: 'matte',     countertop: null,      label: 'Oven',          isAppliance: true },
   dishwasher:      { width: 0.6,  height: 0.85, depth: 0.6,  color: '#d0d0d0', material: 'glossy',    countertop: null,      label: 'Dishwasher',    isAppliance: true },
+
+  // Architectural Fixtures
+  door:            { width: 0.9,  height: 2.1,  depth: 0.15, color: '#e8ebe9', material: 'matte',     countertop: null,      label: 'Door',          isFixture: true },
+  window:          { width: 1.2,  height: 1.2,  depth: 0.15, color: '#d4e8f0', material: 'glossy',    countertop: null,      label: 'Window',        isFixture: true },
+  stairs:          { width: 1.0,  height: 2.8,  depth: 2.5,  color: '#e2d3c0', material: 'wood_grain', countertop: null,      label: 'Stairs',        isFixture: true },
+  partition:       { width: 2.0,  height: 2.8,  depth: 0.12, color: '#eae3da', material: 'matte',     countertop: null,      label: 'Partition Wall', isFixture: true },
 };
 
 const DEFAULT_STATE = {
@@ -30,10 +36,12 @@ const DEFAULT_STATE = {
     floorTexture: 'tile',
   },
   modules: [],
+  rooms: [], // Custom Room Zone rects: { id, label, position: [x,y], width, depth }
   selectedId: null,
   viewMode: 'plan',
   lightingMood: 'day',
   showMeasurements: true,
+  showBacksheet: true, // backward compatible helper
   showBacksplash: true,
   backsplash: {
     pattern: 'subway',
@@ -46,6 +54,20 @@ const DEFAULT_STATE = {
   calibrationPoints: [],
   pixelsPerMeter: 100,
   customAiCatalog: [],
+
+  // Multi-floor states
+  activeFloorId: '1',
+  activeFloorsView: 'active', // 'active' | 'stacked'
+  floors: [
+    { id: '1', name: 'Ground Floor', height: 2.8 },
+  ],
+  floorData: {
+    '1': {
+      roomConfig: { width: 5, depth: 4, height: 2.8, wallColor: '#f0ebe4', floorColor: '#c8b89a', floorTexture: 'tile' },
+      modules: [],
+      rooms: []
+    }
+  }
 };
 
 const useKitchenStore = create((set, get) => ({
@@ -57,8 +79,12 @@ const useKitchenStore = create((set, get) => ({
 
   // ── Push to undo history ──────────────────────────────────────────────────
   _pushHistory: () => {
-    const { modules, roomConfig, historyIndex, history } = get();
-    const snapshot = { modules: JSON.parse(JSON.stringify(modules)), roomConfig: { ...roomConfig } };
+    const { modules, rooms, roomConfig, historyIndex, history } = get();
+    const snapshot = {
+      modules: JSON.parse(JSON.stringify(modules)),
+      rooms: JSON.parse(JSON.stringify(rooms)),
+      roomConfig: { ...roomConfig }
+    };
     const newHistory = history.slice(0, historyIndex + 1);
     newHistory.push(snapshot);
     set({ history: newHistory.slice(-50), historyIndex: Math.min(newHistory.length - 1, 49) });
@@ -160,8 +186,12 @@ const useKitchenStore = create((set, get) => ({
       const design = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
       set({
         modules: design.modules || [],
+        rooms: design.rooms || [],
         roomConfig: design.roomConfig || get().roomConfig,
         backsplash: design.backsplash || get().backsplash,
+        floors: design.floors || get().floors,
+        floorData: design.floorData || get().floorData,
+        activeFloorId: design.activeFloorId || get().activeFloorId,
         selectedId: null,
       });
     } catch (e) { console.error('Failed to load design:', e); }
@@ -187,6 +217,80 @@ const useKitchenStore = create((set, get) => ({
     set({ pixelsPerMeter: ppm, calibrationMode: false, calibrationPoints: [] });
   },
   addCustomAiObject: (obj) => set((state) => ({ customAiCatalog: [...state.customAiCatalog, obj] })),
+
+  // ── Room Zones Actions ──────────────────────────────────────────────────
+  addRoomZone: (label, dims = {}) => {
+    get()._pushHistory();
+    const newRoom = {
+      id: generateId(),
+      label: label || 'New Room',
+      position: [0.5, 0.5],
+      width: dims.width || 2.0,
+      depth: dims.depth || 2.0,
+      color: 'rgba(60, 98, 85, 0.08)'
+    };
+    set((state) => ({ rooms: [...state.rooms, newRoom] }));
+  },
+  updateRoomZone: (id, changes) => {
+    set((state) => ({
+      rooms: state.rooms.map((r) => (r.id === id ? { ...r, ...changes } : r)),
+    }));
+  },
+  removeRoomZone: (id) => {
+    get()._pushHistory();
+    set((state) => ({
+      rooms: state.rooms.filter((r) => r.id !== id),
+    }));
+  },
+
+  // ── Multi-Floor Actions ─────────────────────────────────────────────────
+  switchFloor: (floorId) => {
+    const { activeFloorId, floorData, modules, rooms, roomConfig } = get();
+    const updatedFloorData = {
+      ...floorData,
+      [activeFloorId]: {
+        roomConfig: { ...roomConfig },
+        modules: JSON.parse(JSON.stringify(modules)),
+        rooms: JSON.parse(JSON.stringify(rooms))
+      }
+    };
+    
+    const targetFloor = updatedFloorData[floorId] || {
+      roomConfig: { ...roomConfig },
+      modules: [],
+      rooms: []
+    };
+    
+    set({
+      floorData: updatedFloorData,
+      activeFloorId: floorId,
+      roomConfig: { ...targetFloor.roomConfig },
+      modules: JSON.parse(JSON.stringify(targetFloor.modules)),
+      rooms: JSON.parse(JSON.stringify(targetFloor.rooms)),
+      selectedId: null
+    });
+  },
+  addFloor: (name, height = 2.8) => {
+    get()._pushHistory();
+    const { floors, floorData, roomConfig } = get();
+    const newId = (floors.length + 1).toString();
+    const newFloors = [...floors, { id: newId, name: name || `Floor ${newId}`, height }];
+    
+    const newFloorData = {
+      ...floorData,
+      [newId]: {
+        roomConfig: { ...roomConfig, height },
+        modules: [],
+        rooms: []
+      }
+    };
+    set({ floors: newFloors, floorData: newFloorData });
+    get().switchFloor(newId);
+  },
+  toggleFloorsView: () => {
+    const current = get().activeFloorsView;
+    set({ activeFloorsView: current === 'active' ? 'stacked' : 'active' });
+  },
 }));
 
 export default useKitchenStore;

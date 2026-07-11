@@ -99,6 +99,15 @@ const CATALOG = [
       { type: 'dishwasher',   label: 'Dishwasher',   desc: 'Full-size' },
     ],
   },
+  {
+    category: 'Walls & Openings', icon: '🧱',
+    items: [
+      { type: 'door',      label: 'Single Door',    desc: 'Standard swing door' },
+      { type: 'window',    label: 'Glass Window',   desc: 'Translucent glass pane' },
+      { type: 'stairs',    label: 'Wooden Stairs',  desc: 'Staircase steps' },
+      { type: 'partition', label: 'Partition Wall', desc: 'Room divider wall' },
+    ],
+  },
 ];
 
 const ROOM_PRESETS = [
@@ -159,7 +168,9 @@ export default function Sidebar() {
     undo, redo,
     blueprintUrl, blueprintOpacity, calibrationMode, pixelsPerMeter,
     setBlueprintUrl, setBlueprintOpacity, setCalibrationMode, clearBlueprint,
-    customAiCatalog, addCustomAiObject
+    customAiCatalog, addCustomAiObject,
+    floors, activeFloorId, activeFloorsView, switchFloor, addFloor, toggleFloorsView,
+    rooms, addRoomZone, updateRoomZone, removeRoomZone
   } = useKitchenStore();
 
   const [expandedCategories, setExpandedCategories] = useState(['Base Cabinets', 'Appliances']);
@@ -370,7 +381,7 @@ export default function Sidebar() {
 
         {/* ── ROOM TAB ─────────────────────────────────────── */}
         {activeTab === 'room' && (
-          <div className="sidebar-section">
+          <div className="sidebar-section animate-slide-up">
             <div className="sidebar-section-title"><span>📐</span><span>Room Dimensions</span></div>
             <div className="room-config">
               {[
@@ -389,6 +400,114 @@ export default function Sidebar() {
                   </div>
                 </div>
               ))}
+
+              <div className="divider" />
+              <div className="sidebar-section-title"><span>🏢</span><span>Level Manager</span></div>
+              
+              <div className="form-row">
+                <label className="label">Active Floor</label>
+                <select value={activeFloorId} onChange={(e) => switchFloor(e.target.value)}>
+                  {floors.map((f) => (
+                    <option key={f.id} value={f.id}>{f.name} ({f.height}m)</option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+                <button
+                  className="btn-secondary"
+                  style={{ flex: 1, justifyContent: 'center', fontSize: '0.72rem', padding: '6px 8px' }}
+                  onClick={() => {
+                    const name = prompt("Enter new floor name:", `Floor ${floors.length + 1}`);
+                    if (name) addFloor(name);
+                  }}
+                >
+                  🏢 Add Floor
+                </button>
+                <button
+                  className={`btn-secondary ${activeFloorsView === 'stacked' ? 'active' : ''}`}
+                  style={{
+                    flex: 1, justifyContent: 'center', fontSize: '0.72rem', padding: '6px 8px',
+                    background: activeFloorsView === 'stacked' ? 'rgba(60, 98, 85, 0.15)' : undefined
+                  }}
+                  onClick={toggleFloorsView}
+                >
+                  🏢 View Stacked
+                </button>
+              </div>
+
+              <div className="divider" />
+              <div className="sidebar-section-title"><span>🏷️</span><span>Room Zones</span></div>
+              
+              <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+                <input
+                  type="text" placeholder="e.g. Living Room" id="new-room-zone-name"
+                  style={{ flex: 1, fontSize: '0.75rem', padding: '6px 8px', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-sm)' }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      const val = e.target.value.trim();
+                      if (val) {
+                        addRoomZone(val);
+                        e.target.value = '';
+                      }
+                    }
+                  }}
+                />
+                <button
+                  className="btn-primary"
+                  style={{ fontSize: '0.72rem', padding: '6px 12px' }}
+                  onClick={() => {
+                    const el = document.getElementById('new-room-zone-name');
+                    if (el && el.value.trim()) {
+                      addRoomZone(el.value.trim());
+                      el.value = '';
+                    }
+                  }}
+                >
+                  Add
+                </button>
+              </div>
+
+              {rooms.length === 0 ? (
+                <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textAlign: 'center', padding: '4px 0' }}>
+                  No room partitions defined. Type name above and click Add!
+                </p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 150, overflowY: 'auto' }}>
+                  {rooms.map((rm) => (
+                    <div key={rm.id} style={{ background: 'rgba(60,98,85,0.03)', border: '1px solid var(--border-subtle)', padding: 8, borderRadius: 'var(--radius-sm)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                        <span style={{ fontWeight: 700, fontSize: '0.78rem' }}>{rm.label}</span>
+                        <button
+                          style={{ border: 'none', background: 'none', color: '#ff4d4d', cursor: 'pointer', fontSize: '0.8rem' }}
+                          onClick={() => removeRoomZone(rm.id)}
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                      
+                      <div className="dims-grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 4 }}>
+                        <div className="dim-field" style={{ margin: 0 }}>
+                          <span className="dim-label" style={{ fontSize: '0.62rem', marginBottom: 2 }}>W (m)</span>
+                          <input
+                            type="number" step={0.1} min={0.5} max={10}
+                            value={rm.width} onChange={(e) => updateRoomZone(rm.id, { width: parseFloat(e.target.value) || 1 })}
+                            style={{ padding: '2px 4px', fontSize: '0.7rem', border: '1px solid var(--border-subtle)' }}
+                          />
+                        </div>
+                        <div className="dim-field" style={{ margin: 0 }}>
+                          <span className="dim-label" style={{ fontSize: '0.62rem', marginBottom: 2 }}>D (m)</span>
+                          <input
+                            type="number" step={0.1} min={0.5} max={10}
+                            value={rm.depth} onChange={(e) => updateRoomZone(rm.id, { depth: parseFloat(e.target.value) || 1 })}
+                            style={{ padding: '2px 4px', fontSize: '0.7rem', border: '1px solid var(--border-subtle)' }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               <div className="divider" />
               <div className="sidebar-section-title" style={{ marginTop: 4 }}><span>🎨</span><span>Colors</span></div>

@@ -225,7 +225,10 @@ function SceneConfig({ mood, roomConfig }) {
 // ─── Main Scene Content ───────────────────────────────────────────────────────
 function SceneContent({ isWalkthrough }) {
   const app = useApp();
-  const { roomConfig, modules, lightingMood } = useKitchenStore();
+  const {
+    roomConfig, modules, lightingMood,
+    activeFloorsView, floors, floorData, activeFloorId
+  } = useKitchenStore();
   const cfg = MOODS[lightingMood] || MOODS.day;
 
   const { width, depth, height } = roomConfig;
@@ -235,6 +238,33 @@ function SceneContent({ isWalkthrough }) {
     [-width * 0.25, height - 0.05, -depth * 0.15],
     [width * 0.25, height - 0.05, -depth * 0.15],
   ];
+
+  const floorItems = useMemo(() => {
+    if (activeFloorsView === 'stacked') {
+      let cumulativeY = 0;
+      return floors.map((f) => {
+        const offset = cumulativeY;
+        cumulativeY += f.height;
+        const isCurrent = f.id === activeFloorId;
+        const data = isCurrent ? { modules, roomConfig } : (floorData[f.id] || { modules: [], roomConfig: { width: 5, depth: 4, height: 2.8 } });
+        return {
+          ...f,
+          yOffset: offset,
+          modulesList: data.modules || [],
+          config: data.roomConfig,
+        };
+      });
+    } else {
+      return [{
+        id: activeFloorId,
+        name: 'Active Floor',
+        height: roomConfig.height,
+        yOffset: 0,
+        modulesList: modules,
+        config: roomConfig,
+      }];
+    }
+  }, [activeFloorsView, floors, floorData, activeFloorId, modules, roomConfig]);
 
   return (
     <Entity name="scene-root">
@@ -271,12 +301,17 @@ function SceneContent({ isWalkthrough }) {
         color="#e8f0ff"
       />
 
-      <Room roomConfig={roomConfig} app={app} />
-      <Backsplash roomConfig={roomConfig} />
+      {/* Stacked Floor entities list */}
+      {floorItems.map((f) => (
+        <Entity key={f.id} name={`floor-${f.id}`} position={[0, f.yOffset, 0]}>
+          <Room roomConfig={f.config} app={app} />
+          <Backsplash roomConfig={f.config} />
 
-      {/* Modules */}
-      {modules.map((mod) => (
-        <KitchenModule key={mod.id} mod={mod} roomConfig={roomConfig} />
+          {/* Modules */}
+          {f.modulesList.map((mod) => (
+            <KitchenModule key={mod.id} mod={mod} roomConfig={f.config} />
+          ))}
+        </Entity>
       ))}
 
       <MeasurementOverlay roomConfig={roomConfig} />
