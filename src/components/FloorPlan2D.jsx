@@ -415,6 +415,104 @@ export default function FloorPlan2D() {
         return;
       }
 
+      if (mod.type === 'sofa') {
+        ctx.fillStyle = isSelected ? '#a8b6be' : '#c4d0d6';
+        ctx.strokeStyle = '#3c6255';
+        ctx.lineWidth = isSelected ? 2 : 1;
+        
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(mw, 0);
+        ctx.lineTo(mw, mh * 0.4);
+        ctx.lineTo(mw * 0.4, mh * 0.4);
+        ctx.lineTo(mw * 0.4, mh);
+        ctx.lineTo(0, mh);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(0, mh * 0.12);
+        ctx.lineTo(mw, mh * 0.12);
+        ctx.moveTo(mw * 0.12, mh * 0.12);
+        ctx.lineTo(mw * 0.12, mh);
+        ctx.stroke();
+
+        ctx.restore();
+        return;
+      }
+
+      if (mod.type === 'armchair') {
+        ctx.fillStyle = isSelected ? '#e0e0e0' : '#f5f5f5';
+        ctx.strokeStyle = '#3c6255';
+        ctx.lineWidth = isSelected ? 2 : 1;
+        ctx.beginPath();
+        ctx.roundRect(0, 0, mw, mh, 4);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.strokeRect(0, 0, mw * 0.15, mh);
+        ctx.strokeRect(mw * 0.85, 0, mw * 0.15, mh);
+        ctx.strokeRect(mw * 0.15, 0, mw * 0.7, mh * 0.15);
+
+        ctx.restore();
+        return;
+      }
+
+      if (mod.type === 'coffee_table') {
+        ctx.fillStyle = isSelected ? '#d8c5b0' : '#e2ccb0';
+        ctx.strokeStyle = '#8b5a2b';
+        ctx.lineWidth = isSelected ? 2.5 : 1.5;
+        ctx.beginPath();
+        ctx.arc(mw / 2, mh / 2, Math.min(mw, mh) / 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.restore();
+        return;
+      }
+
+      if (mod.type === 'sideboard') {
+        ctx.fillStyle = isSelected ? '#2d2621' : '#3a322c';
+        ctx.strokeStyle = '#1a1410';
+        ctx.lineWidth = isSelected ? 2 : 1;
+        ctx.fillRect(0, 0, mw, mh);
+        ctx.strokeRect(0, 0, mw, mh);
+        
+        ctx.beginPath();
+        ctx.moveTo(mw / 3, 0); ctx.lineTo(mw / 3, mh);
+        ctx.moveTo(mw * 2/3, 0); ctx.lineTo(mw * 2/3, mh);
+        ctx.stroke();
+
+        ctx.restore();
+        return;
+      }
+
+      if (mod.type === 'rug') {
+        ctx.strokeStyle = '#4a5054';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([2, 4]);
+        ctx.strokeRect(0, 0, mw, mh);
+        ctx.setLineDash([]);
+        
+        ctx.fillStyle = 'rgba(74, 80, 84, 0.05)';
+        ctx.fillRect(0, 0, mw, mh);
+
+        ctx.restore();
+        return;
+      }
+
+      if (mod.type === 'framed_art') {
+        ctx.fillStyle = '#222222';
+        ctx.fillRect(0, 0, mw, mh * 0.15);
+        ctx.strokeStyle = '#3c6255';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(0, 0, mw, mh * 0.15);
+
+        ctx.restore();
+        return;
+      }
+
       if (isSelected || isHovered) {
         ctx.shadowColor = isSelected ? 'rgba(60, 98, 85, 0.35)' : 'rgba(60, 98, 85, 0.08)';
         ctx.shadowBlur = 12;

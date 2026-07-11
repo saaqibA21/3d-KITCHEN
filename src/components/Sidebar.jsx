@@ -108,6 +108,17 @@ const CATALOG = [
       { type: 'partition', label: 'Partition Wall', desc: 'Room divider wall' },
     ],
   },
+  {
+    category: 'Living & Decor', icon: '🛋️',
+    items: [
+      { type: 'sofa',         label: 'L-Shape Sofa',    desc: 'Sectional sofa' },
+      { type: 'armchair',     label: 'Accent Armchair',  desc: 'White armchair' },
+      { type: 'coffee_table', label: 'Coffee Table',     desc: 'Circular wood' },
+      { type: 'sideboard',    label: 'Sideboard Cabinet', desc: 'Dark wood crezenda' },
+      { type: 'rug',          label: 'Area Rug',         desc: 'Charcoal fabric' },
+      { type: 'framed_art',   label: 'Framed Painting',  desc: 'Wall landscape print' },
+    ],
+  },
 ];
 
 const ROOM_PRESETS = [

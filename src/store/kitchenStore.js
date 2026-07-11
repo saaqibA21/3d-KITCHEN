@@ -24,6 +24,14 @@ const MODULE_DEFAULTS = {
   window:          { width: 1.2,  height: 1.2,  depth: 0.15, color: '#d4e8f0', material: 'glossy',    countertop: null,      label: 'Window',        isFixture: true },
   stairs:          { width: 1.0,  height: 2.8,  depth: 2.5,  color: '#e2d3c0', material: 'wood_grain', countertop: null,      label: 'Stairs',        isFixture: true },
   partition:       { width: 2.0,  height: 2.8,  depth: 0.12, color: '#eae3da', material: 'matte',     countertop: null,      label: 'Partition Wall', isFixture: true },
+
+  // Living Room & Decor
+  sofa:            { width: 2.2,  height: 0.75, depth: 1.6,  color: '#6e808a', material: 'matte',     countertop: null,      label: 'L-Shape Sofa' },
+  coffee_table:    { width: 0.8,  height: 0.45, depth: 0.8,  color: '#e2ccb0', material: 'wood_grain', countertop: null,     label: 'Coffee Table' },
+  armchair:        { width: 0.8,  height: 0.8,  depth: 0.8,  color: '#f5f5f5', material: 'matte',     countertop: null,      label: 'Armchair' },
+  sideboard:       { width: 1.8,  height: 0.75, depth: 0.5,  color: '#3a322c', material: 'wood_grain', countertop: null,     label: 'Sideboard' },
+  rug:             { width: 2.4,  height: 0.01, depth: 1.8,  color: '#4a5054', material: 'matte',     countertop: null,      label: 'Area Rug' },
+  framed_art:      { width: 0.9,  height: 0.9,  depth: 0.03, color: '#222222', material: 'matte',     countertop: null,      label: 'Framed Art' },
 };
 
 const DEFAULT_STATE = {

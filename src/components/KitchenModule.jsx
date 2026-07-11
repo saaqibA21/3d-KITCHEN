@@ -777,6 +777,156 @@ function PartitionModel3D({ mod, isSelected, app }) {
   );
 }
 
+// ─── Living Room & Decor Models ────────────────────────────────────────────────
+function SofaModel3D({ mod, isSelected }) {
+  const { w, h, d } = { w: mod.width, h: mod.height, d: mod.depth };
+  const fabricMat = useMaterial({ diffuse: hexToColor(mod.color || '#6e808a'), roughness: 0.85 });
+  const baseMat = useMaterial({ diffuse: hexToColor('#222222'), roughness: 0.9 });
+  
+  return (
+    <Entity name="3d-sofa">
+      <Entity position={[-w * 0.1, 0.15 / 2, -d * 0.2]} scale={[w * 0.8, 0.15, d * 0.6]}>
+        <Render type="box" material={baseMat} castShadows receiveShadows />
+      </Entity>
+      <Entity position={[w * 0.3, 0.15 / 2, d * 0.1]} scale={[w * 0.4, 0.15, d * 1.2]}>
+        <Render type="box" material={baseMat} castShadows receiveShadows />
+      </Entity>
+      
+      <Entity position={[-w * 0.1, 0.15 + 0.12, -d * 0.2]} scale={[w * 0.8, 0.24, d * 0.6]}>
+        <Render type="box" material={fabricMat} castShadows />
+      </Entity>
+      <Entity position={[w * 0.3, 0.15 + 0.12, d * 0.1]} scale={[w * 0.4, 0.24, d * 1.2]}>
+        <Render type="box" material={fabricMat} castShadows />
+      </Entity>
+
+      <Entity position={[-w * 0.1, h - 0.2, -d * 0.45]} scale={[w * 0.8, 0.4, 0.15]}>
+        <Render type="box" material={fabricMat} castShadows />
+      </Entity>
+      <Entity position={[w * 0.42, h - 0.2, d * 0.1]} scale={[0.15, 0.4, d * 1.2]}>
+        <Render type="box" material={fabricMat} castShadows />
+      </Entity>
+
+      {isSelected && <SelectionBox width={w} height={h} depth={d} />}
+    </Entity>
+  );
+}
+
+function ArmchairModel3D({ mod, isSelected }) {
+  const { w, h, d } = { w: mod.width, h: mod.height, d: mod.depth };
+  const fabricMat = useMaterial({ diffuse: hexToColor(mod.color || '#f5f5f5'), roughness: 0.9 });
+  const woodMat = useMaterial({ diffuse: hexToColor('#8b5a2b'), roughness: 0.6 });
+
+  return (
+    <Entity name="3d-armchair">
+      <Entity position={[0, 0.25, 0]} scale={[w * 0.75, 0.2, d * 0.75]}>
+        <Render type="box" material={fabricMat} castShadows />
+      </Entity>
+      <Entity position={[0, h * 0.6, -d * 0.38]} scale={[w * 0.75, h * 0.7, 0.12]}>
+        <Render type="box" material={fabricMat} castShadows />
+      </Entity>
+      <Entity position={[-w * 0.42, h * 0.45, 0]} scale={[0.1, h * 0.6, d]}>
+        <Render type="box" material={fabricMat} castShadows />
+      </Entity>
+      <Entity position={[w * 0.42, h * 0.45, 0]} scale={[0.1, h * 0.6, d]}>
+        <Render type="box" material={fabricMat} castShadows />
+      </Entity>
+      {[-0.38, 0.38].map((lx) =>
+        [-0.38, 0.38].map((lz) => (
+          <Entity key={`${lx}-${lz}`} position={[lx * w, 0.08, lz * d]} scale={[0.04, 0.16, 0.04]}>
+            <Render type="cylinder" material={woodMat} castShadows />
+          </Entity>
+        ))
+      )}
+      {isSelected && <SelectionBox width={w} height={h} depth={d} />}
+    </Entity>
+  );
+}
+
+function CoffeeTableModel3D({ mod, isSelected }) {
+  const { w, h, d } = { w: mod.width, h: mod.height, d: mod.depth };
+  const woodMat = useMaterial({ diffuse: hexToColor(mod.color || '#e2ccb0'), roughness: 0.6 });
+  const metalMat = useMaterial({ diffuse: hexToColor('#111111'), roughness: 0.4, metalness: 0.8 });
+
+  const topH = 0.03;
+  return (
+    <Entity name="3d-coffee-table">
+      <Entity position={[0, h - topH / 2, 0]} scale={[w, topH, d]}>
+        <Render type="cylinder" material={woodMat} castShadows />
+      </Entity>
+      {[0, 120, 240].map((angle, i) => {
+        const rad = (angle * Math.PI) / 180;
+        const lx = Math.cos(rad) * w * 0.35;
+        const lz = Math.sin(rad) * d * 0.35;
+        return (
+          <Entity
+            key={i}
+            position={[lx, (h - topH) / 2, lz]}
+            rotation={[10, 0, angle]}
+            scale={[0.02, h - topH, 0.02]}
+          >
+            <Render type="cylinder" material={metalMat} castShadows />
+          </Entity>
+        );
+      })}
+      {isSelected && <SelectionBox width={w} height={h} depth={d} />}
+    </Entity>
+  );
+}
+
+function SideboardModel3D({ mod, isSelected }) {
+  const { w, h, d } = { w: mod.width, h: mod.height, d: mod.depth };
+  const woodMat = useMaterial({ diffuse: hexToColor(mod.color || '#3a322c'), roughness: 0.7 });
+  const handleMat = useMaterial({ diffuse: hexToColor('#c0c0c0'), roughness: 0.2, metalness: 0.8 });
+
+  return (
+    <Entity name="3d-sideboard">
+      <Entity position={[0, h / 2, 0]} scale={[w, h, d]}>
+        <Render type="box" material={woodMat} castShadows receiveShadows />
+      </Entity>
+      {[-0.3, 0, 0.3].map((hx, i) => (
+        <React.Fragment key={i}>
+          <Entity position={[hx * w, h * 0.7, d / 2 + 0.015]} scale={[0.12, 0.015, 0.02]}>
+            <Render type="box" material={handleMat} castShadows />
+          </Entity>
+          <Entity position={[hx * w, h * 0.35, d / 2 + 0.015]} scale={[0.12, 0.015, 0.02]}>
+            <Render type="box" material={handleMat} castShadows />
+          </Entity>
+        </React.Fragment>
+      ))}
+      {isSelected && <SelectionBox width={w} height={h} depth={d} />}
+    </Entity>
+  );
+}
+
+function RugModel3D({ mod, isSelected }) {
+  const { w, h, d } = { w: mod.width, h: mod.height, d: mod.depth };
+  const rugMat = useMaterial({ diffuse: hexToColor(mod.color || '#4a5054'), roughness: 0.98 });
+
+  return (
+    <Entity name="3d-rug" position={[0, 0.002, 0]} scale={[w, 0.004, d]}>
+      <Render type="box" material={rugMat} receiveShadows />
+    </Entity>
+  );
+}
+
+function FramedArtModel3D({ mod, isSelected }) {
+  const { w, h, d } = { w: mod.width, h: mod.height, d: mod.depth };
+  const frameMat = useMaterial({ diffuse: hexToColor('#111111'), roughness: 0.4 });
+  const artMat = useMaterial({ diffuse: hexToColor('#f0ebe4'), roughness: 0.9 });
+
+  return (
+    <Entity name="3d-framed-art">
+      <Entity position={[0, h / 2, 0]} scale={[w, h, 0.02]}>
+        <Render type="box" material={frameMat} castShadows />
+      </Entity>
+      <Entity position={[0, h / 2, 0.011]} scale={[w - 0.08, h - 0.08, 0.005]}>
+        <Render type="box" material={artMat} />
+      </Entity>
+      {isSelected && <SelectionBox width={w} height={h} depth={d} />}
+    </Entity>
+  );
+}
+
 // ─── Renderer Map ─────────────────────────────────────────────────────────────
 const CABINET_MAP = {
   base_cabinet: BaseCabinet,
@@ -794,6 +944,12 @@ const CABINET_MAP = {
   window:       WindowModel3D,
   stairs:       StairsModel3D,
   partition:    PartitionModel3D,
+  sofa:         SofaModel3D,
+  armchair:     ArmchairModel3D,
+  coffee_table: CoffeeTableModel3D,
+  sideboard:    SideboardModel3D,
+  rug:          RugModel3D,
+  framed_art:   FramedArtModel3D,
 };
 
 const APPLIANCE_MAP = {

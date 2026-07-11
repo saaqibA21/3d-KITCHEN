@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Entity } from '@playcanvas/react';
 import { Render } from '@playcanvas/react/components';
 import { useMaterial } from '@playcanvas/react/hooks';
-import { Color } from 'playcanvas';
+import { Color, Vec2 } from 'playcanvas';
+import { getCabinetTexture, getCountertopTexture } from '../utils/textures';
 
 export function hexToColor(hex) {
   if (!hex) return new Color(1, 1, 1);
@@ -13,13 +14,28 @@ export function hexToColor(hex) {
 }
 
 // ── Sink Appliance ────────────────────────────────────────────────────────────
-export function SinkModel({ mod }) {
+export function SinkModel({ mod, app }) {
   const { width: w, height: h, depth: d } = mod;
   
-  const bodyMat = useMaterial({ diffuse: hexToColor('#d8c8a8'), roughness: 0.8 });
-  const ctMat = useMaterial({ diffuse: hexToColor('#707070'), roughness: 0.3, metalness: 0.1 });
+  const cabTex = useMemo(() => getCabinetTexture(app, mod.material || 'matte', mod.color || '#e8dcc8'), [app, mod.material, mod.color]);
+  const ctTex = useMemo(() => getCountertopTexture(app, mod.countertop || 'granite', '#888888'), [app, mod.countertop]);
+
+  const bodyMat = useMaterial({
+    diffuse: cabTex ? undefined : hexToColor(mod.color || '#e8dcc8'),
+    diffuseMap: cabTex || undefined,
+    roughness: 0.8,
+    diffuseMapTiling: cabTex ? new Vec2(2, 2) : undefined
+  });
+
+  const ctMat = useMaterial({
+    diffuse: ctTex ? undefined : hexToColor('#f0ede8'),
+    diffuseMap: ctTex || undefined,
+    roughness: 0.2,
+    diffuseMapTiling: ctTex ? new Vec2(1.5, 1.5) : undefined
+  });
+
   const basinMat = useMaterial({ diffuse: hexToColor('#b8b8b8'), roughness: 0.2, metalness: 0.6 });
-  const chromeMat = useMaterial({ diffuse: hexToColor('#c0c0c0'), roughness: 0.1, metalness: 0.8 });
+  const blackMat = useMaterial({ diffuse: hexToColor('#1a1a1a'), roughness: 0.5 });
 
   return (
     <Entity name="sink-appliance">
@@ -35,26 +51,48 @@ export function SinkModel({ mod }) {
       <Entity position={[0, h - 0.03, 0]} scale={[w * 0.65, 0.06, d * 0.65]}>
         <Render type="box" material={basinMat} castShadows />
       </Entity>
-      {/* Faucet base */}
-      <Entity position={[0, h + 0.04, -d * 0.2]} scale={[0.04, 0.08, 0.04]}>
-        <Render type="cylinder" material={chromeMat} castShadows />
+      
+      {/* Matte-Black Gooseneck Faucet */}
+      <Entity position={[0, h + 0.06, -d * 0.2]} scale={[0.02, 0.12, 0.02]}>
+        <Render type="cylinder" material={blackMat} castShadows />
       </Entity>
-      {/* Faucet neck */}
-      <Entity position={[0, h + 0.18, -d * 0.12]} scale={[0.03, 0.24, 0.03]}>
-        <Render type="cylinder" material={chromeMat} castShadows />
+      <Entity position={[0, h + 0.12, -d * 0.14]} rotation={[90, 0, 0]} scale={[0.02, 0.12, 0.02]}>
+        <Render type="cylinder" material={blackMat} castShadows />
+      </Entity>
+      <Entity position={[0, h + 0.10, -d * 0.08]} scale={[0.015, 0.04, 0.015]}>
+        <Render type="cylinder" material={blackMat} castShadows />
+      </Entity>
+      <Entity position={[0.04, h + 0.04, -d * 0.2]} rotation={[0, 0, 45]} scale={[0.008, 0.05, 0.008]}>
+        <Render type="box" material={blackMat} castShadows />
       </Entity>
     </Entity>
   );
 }
 
 // ── Stove Appliance ───────────────────────────────────────────────────────────
-export function StoveModel({ mod }) {
+export function StoveModel({ mod, app }) {
   const { width: w, height: h, depth: d } = mod;
   
-  const bodyMat = useMaterial({ diffuse: hexToColor('#2a2a2a'), roughness: 0.5 });
+  const cabTex = useMemo(() => getCabinetTexture(app, mod.material || 'matte', mod.color || '#e8dcc8'), [app, mod.material, mod.color]);
+  const ctTex = useMemo(() => getCountertopTexture(app, mod.countertop || 'granite', '#888888'), [app, mod.countertop]);
+
+  const bodyMat = useMaterial({
+    diffuse: cabTex ? undefined : hexToColor(mod.color || '#e8dcc8'),
+    diffuseMap: cabTex || undefined,
+    roughness: 0.8,
+    diffuseMapTiling: cabTex ? new Vec2(2, 2) : undefined
+  });
+
+  const ctMat = useMaterial({
+    diffuse: ctTex ? undefined : hexToColor('#f0ede8'),
+    diffuseMap: ctTex || undefined,
+    roughness: 0.2,
+    diffuseMapTiling: ctTex ? new Vec2(1.5, 1.5) : undefined
+  });
+
   const surfaceMat = useMaterial({ diffuse: hexToColor('#111111'), roughness: 0.1, metalness: 0.1 });
   const burnerMat = useMaterial({ diffuse: hexToColor('#1a1a1a'), roughness: 0.3, metalness: 0.3 });
-  const knobMat = useMaterial({ diffuse: hexToColor('#555555'), roughness: 0.4, metalness: 0.5 });
+  const knobMat = useMaterial({ diffuse: hexToColor('#333333'), roughness: 0.5 });
 
   const burnerPositions = [
     [-w * 0.2, w * 0.15],
@@ -65,23 +103,25 @@ export function StoveModel({ mod }) {
 
   return (
     <Entity name="stove-appliance">
-      {/* Main body */}
-      <Entity position={[0, h / 2, 0]} scale={[w, h, d]}>
+      <Entity position={[0, (h - 0.05) / 2, 0]} scale={[w, h - 0.05, d]}>
         <Render type="box" material={bodyMat} castShadows receiveShadows />
       </Entity>
-      {/* Cooktop surface */}
-      <Entity position={[0, h + 0.005, 0]} scale={[w, 0.01, d]}>
+      <Entity position={[0, h - 0.02, 0]} scale={[w + 0.01, 0.04, d + 0.01]}>
+        <Render type="box" material={ctMat} castShadows receiveShadows />
+      </Entity>
+
+      <Entity position={[0, h + 0.005, 0]} scale={[w * 0.9, 0.01, d * 0.9]}>
         <Render type="box" material={surfaceMat} castShadows receiveShadows />
       </Entity>
-      {/* Burners */}
+      
       {burnerPositions.map(([bx, bz], i) => (
-        <Entity key={i} position={[bx, h + 0.01, bz]} scale={[w * 0.24, 0.02, w * 0.24]}>
+        <Entity key={i} position={[bx, h + 0.015, bz]} scale={[w * 0.24, 0.01, w * 0.24]}>
           <Render type="cylinder" material={burnerMat} castShadows />
         </Entity>
       ))}
-      {/* Control knobs */}
+
       {[-0.18, -0.06, 0.06, 0.18].map((kx, i) => (
-        <Entity key={i} position={[kx * w, h * 0.6, -d / 2 - 0.015]} rotation={[90, 0, 0]} scale={[0.04, 0.03, 0.04]}>
+        <Entity key={i} position={[kx * w, h + 0.015, d * 0.4]} scale={[0.03, 0.01, 0.03]}>
           <Render type="cylinder" material={knobMat} castShadows />
         </Entity>
       ))}
