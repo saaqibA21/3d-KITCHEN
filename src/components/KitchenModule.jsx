@@ -23,31 +23,102 @@ const CT_PROPS = {
 };
 
 function useCabinetMat(app, mod) {
+  const matRef = useRef(null);
+  const [, tick] = useState(0);
   const { color, material, textureScale = 1.0, textureRotation = 0 } = mod;
-  const map = useMemo(() => getCabinetTexture(app, material, color), [app, material, color]);
-  const props = MAT_PROPS[material] || MAT_PROPS.matte;
-  return useMaterial({
-    diffuse: map ? undefined : hexToColor(color),
-    diffuseMap: map || undefined,
-    roughness: props.roughness,
-    metalness: props.metalness,
-    diffuseMapTiling: map ? new Vec2(2 * textureScale, 2 * textureScale) : undefined,
-    diffuseMapRotation: textureRotation,
-  });
+
+  useEffect(() => {
+    if (!app || !app.graphicsDevice) return;
+
+    // Create material once
+    if (!matRef.current) {
+      matRef.current = new StandardMaterial();
+    }
+    const m = matRef.current;
+
+    // Apply color first (always)
+    const pc = hexToColor(color);
+    m.diffuse = new Color(pc.r, pc.g, pc.b);
+
+    // Apply texture on top of color if available
+    const tex = getCabinetTexture(app, material, color);
+    if (tex) {
+      m.diffuseMap = tex;
+      m.diffuseMapTiling = new Vec2(2 * textureScale, 2 * textureScale);
+      m.diffuseMapRotation = textureRotation;
+      // When textured, white diffuse lets texture show true color
+      m.diffuse = new Color(1, 1, 1);
+    } else {
+      m.diffuseMap = null;
+      m.diffuseMapTiling = undefined;
+    }
+
+    const props = MAT_PROPS[material] || MAT_PROPS.matte;
+    m.roughness = props.roughness;
+    m.metalness = props.metalness;
+
+    // Glossy: add specular sheen
+    if (material === 'glossy') {
+      m.specular = new Color(0.9, 0.9, 0.9);
+      m.shininess = 85;
+    } else {
+      m.specular = new Color(0.1, 0.1, 0.1);
+      m.shininess = 10;
+    }
+
+    m.update();
+    tick(n => n + 1);
+  }, [app, color, material, textureScale, textureRotation]);
+
+  // Bootstrap a placeholder before first effect fires
+  if (!matRef.current && app && app.graphicsDevice) {
+    const m = new StandardMaterial();
+    const pc = hexToColor(color);
+    m.diffuse = new Color(pc.r, pc.g, pc.b);
+    m.update();
+    matRef.current = m;
+  }
+  return matRef.current;
 }
 
 function useCountertopMat(app, mod) {
-  const { countertop, textureScale = 1.0, textureRotation = 0 } = mod;
-  const map = useMemo(() => getCountertopTexture(app, countertop, '#888888'), [app, countertop]);
-  const props = CT_PROPS[countertop] || CT_PROPS.granite;
-  return useMaterial({
-    diffuse: map ? undefined : hexToColor('#666666'),
-    diffuseMap: map || undefined,
-    roughness: props.roughness,
-    metalness: props.metalness,
-    diffuseMapTiling: map ? new Vec2(1.5 * textureScale, 1.5 * textureScale) : undefined,
-    diffuseMapRotation: textureRotation,
-  });
+  const matRef = useRef(null);
+  const [, tick] = useState(0);
+  const { countertop, color, textureScale = 1.0 } = mod;
+
+  useEffect(() => {
+    if (!app || !app.graphicsDevice) return;
+
+    if (!matRef.current) {
+      matRef.current = new StandardMaterial();
+    }
+    const m = matRef.current;
+
+    const tex = getCountertopTexture(app, countertop, color || '#888888');
+    if (tex) {
+      m.diffuseMap = tex;
+      m.diffuse = new Color(1, 1, 1);
+      m.diffuseMapTiling = new Vec2(1.5 * textureScale, 1.5 * textureScale);
+    } else {
+      m.diffuseMap = null;
+      m.diffuse = new Color(0.4, 0.4, 0.4);
+    }
+
+    const props = CT_PROPS[countertop] || CT_PROPS.granite;
+    m.roughness = props.roughness;
+    m.metalness = props.metalness;
+    m.update();
+    tick(n => n + 1);
+  }, [app, countertop, color, textureScale]);
+
+  if (!matRef.current && app && app.graphicsDevice) {
+    const m = new StandardMaterial();
+    m.diffuse = new Color(0.4, 0.4, 0.4);
+    m.roughness = 0.3;
+    m.update();
+    matRef.current = m;
+  }
+  return matRef.current;
 }
 
 // ─── Helper parts ────────────────────────────────────────────────────────────
@@ -770,16 +841,17 @@ function GlbModelRenderer({ url, mod, isSelected, app }) {
 
 function CustomAiObjectModel({ mod, isSelected, app }) {
   const { w, h, d } = { w: mod.width, h: mod.height, d: mod.depth };
+
+  if (mod.objectType === 'glb') {
+    return <GlbModelRenderer url={mod.glbUrl} mod={mod} isSelected={isSelected} app={app} />;
+  }
+
   const customMat = useCustomAiMaterial(app, mod.customImageUrl);
   const sideMat = useMaterial({ diffuse: hexToColor('#1a1a1a'), roughness: 0.7, metalness: 0.15 });
   const topMat  = useMaterial({ diffuse: hexToColor('#2a2a2a'), roughness: 0.6, metalness: 0.1 });
   const legMat  = useMaterial({ diffuse: hexToColor('#111111'), roughness: 0.3, metalness: 0.8 });
 
   if (!customMat) return null;
-
-  if (mod.objectType === 'glb') {
-    return <GlbModelRenderer url={mod.glbUrl} mod={mod} isSelected={isSelected} app={app} />;
-  }
   if (mod.objectType === 'lamp') {
     return <LampModel w={w} h={h} d={d} customMat={customMat} profile={mod.silhouetteProfile} isSelected={isSelected} />;
   }
