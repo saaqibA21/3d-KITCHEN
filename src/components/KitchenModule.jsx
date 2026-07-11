@@ -536,47 +536,80 @@ function LatheMeshRenderer({ profile, w, h, d, material }) {
 }
 
 function LampModel({ w, h, d, customMat, profile, isSelected }) {
-  if (profile && profile.length > 0) {
-    return (
-      <Entity name="custom-lathe-lamp">
-        <Entity position={[0, h / 2, 0]}>
-          <LatheMeshRenderer profile={profile} w={w} h={h} d={d} material={customMat} />
-        </Entity>
-        {isSelected && <SelectionBox width={w} height={h} depth={d} />}
-      </Entity>
-    );
-  }
+  // Always use proper structured model — silhouette lathe was distorted/unreliable
+  const blackMat    = useMaterial({ diffuse: hexToColor('#0e0e0e'), roughness: 0.4, metalness: 0.2 });
+  const goldMat     = useMaterial({ diffuse: hexToColor('#c8860a'), roughness: 0.12, metalness: 0.92 });
+  const darkGoldMat = useMaterial({ diffuse: hexToColor('#7a5200'), roughness: 0.3,  metalness: 0.6 });
+  const glowMat     = useMaterial({
+    diffuse: hexToColor('#fff6d6'),
+    emissive: hexToColor('#ffbb44'),
+    emissiveIntensity: 4.0,
+    roughness: 1.0, metalness: 0.0,
+  });
 
-  const blackMat = useMaterial({ diffuse: hexToColor('#1a1a1a'), roughness: 0.6, metalness: 0.1 });
-  const goldMat = useMaterial({ diffuse: hexToColor('#e2a85c'), roughness: 0.15, metalness: 0.8 });
-  const glowMat = useMaterial({ diffuse: hexToColor('#ffeed6'), emissive: hexToColor('#ffeed6'), emissiveIntensity: 2.0 });
+  // Proportional breakdown (bottom to top):
+  // base disc -> gold trumpet -> black stem -> glow bulb -> drum shade
+  const standH   = h * 0.04;
+  const trumpetH = h * 0.22;
+  const stemH    = h * 0.28;
+  const shadeH   = h * 0.40;
 
-  const standH = 0.02;
-  const baseH = h * 0.25;
-  const stemH = h * 0.4;
-  const shadeH = h * 0.35;
+  const baseY    = standH * 0.5;
+  const trumpetY = standH + trumpetH * 0.5;
+  const stemY    = standH + trumpetH + stemH * 0.5;
+  const bulbY    = standH + trumpetH + stemH;
+  const shadeY   = standH + trumpetH + stemH + shadeH * 0.5;
+
+  const shadeR      = w * 0.50;
+  const trumpetBotR = w * 0.38;
+  const bulbR       = w * 0.10;
 
   return (
     <Entity name="custom-lamp">
-      <Entity position={[0, standH / 2, 0]} scale={[w * 0.6, standH, w * 0.6]}>
-        <Render type="cylinder" material={blackMat} castShadows />
+      {/* Flat black base disc */}
+      <Entity position={[0, baseY, 0]} scale={[w * 0.55, standH, w * 0.55]}>
+        <Render type="cylinder" material={blackMat} castShadows receiveShadows />
       </Entity>
-      <Entity position={[0, standH + baseH / 2, 0]} scale={[w * 0.5, baseH, w * 0.5]}>
+
+      {/* Gold trumpet — inverted cone (wide at bottom, narrow at top) */}
+      <Entity position={[0, trumpetY, 0]} rotation={[180, 0, 0]} scale={[trumpetBotR * 2, trumpetH, trumpetBotR * 2]}>
         <Render type="cone" material={goldMat} castShadows />
       </Entity>
-      <Entity position={[0, standH + baseH + stemH / 2, 0]} scale={[w * 0.08, stemH, w * 0.08]}>
+      {/* Small gold collar between trumpet top and stem */}
+      <Entity position={[0, standH + trumpetH - 0.005, 0]} scale={[w * 0.13, 0.04, w * 0.13]}>
+        <Render type="cylinder" material={goldMat} castShadows />
+      </Entity>
+
+      {/* Thin black stem */}
+      <Entity position={[0, stemY, 0]} scale={[w * 0.055, stemH, w * 0.055]}>
         <Render type="cylinder" material={blackMat} castShadows />
       </Entity>
-      <Entity position={[0, standH + baseH + stemH, 0]} scale={[w * 0.15, w * 0.15, w * 0.15]}>
+
+      {/* Warm glow bulb at shade base */}
+      <Entity position={[0, bulbY + bulbR * 0.5, 0]} scale={[bulbR * 2, bulbR * 2, bulbR * 2]}>
         <Render type="sphere" material={glowMat} />
       </Entity>
-      <Entity position={[0, h - shadeH / 2, 0]} scale={[w, shadeH, w]}>
+
+      {/* Drum shade — image texture on cylinder */}
+      <Entity position={[0, shadeY, 0]} scale={[shadeR * 2, shadeH, shadeR * 2]}>
         <Render type="cylinder" material={customMat} castShadows receiveShadows />
       </Entity>
+
+      {/* Top rim of shade */}
+      <Entity position={[0, standH + trumpetH + stemH + shadeH - 0.003, 0]} scale={[shadeR * 2, 0.012, shadeR * 2]}>
+        <Render type="cylinder" material={darkGoldMat} castShadows />
+      </Entity>
+
+      {/* Bottom rim of shade */}
+      <Entity position={[0, standH + trumpetH + stemH + 0.003, 0]} scale={[shadeR * 2 + 0.012, 0.012, shadeR * 2 + 0.012]}>
+        <Render type="cylinder" material={blackMat} castShadows />
+      </Entity>
+
       {isSelected && <SelectionBox width={w} height={h} depth={d} />}
     </Entity>
   );
 }
+
 
 function StoolModel({ w, h, d, customMat, isSelected }) {
   const woodMat = useMaterial({ diffuse: hexToColor('#8b5a2b'), roughness: 0.6 });
