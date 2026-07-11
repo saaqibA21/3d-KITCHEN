@@ -44,8 +44,13 @@ export default function PropertiesPanel() {
   return (
     <div className="props-panel animate-slide-right">
       <div className="props-header">
-        <span className="props-header-icon">⚙️</span>
-        <span>Properties</span>
+        <span className="props-header-icon">✦</span>
+        <span style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.04em' }}>Properties</span>
+        {mod && (
+          <span style={{ marginLeft: 'auto', fontSize: '0.60rem', color: 'var(--text-muted)', fontFamily: 'monospace', background: 'rgba(245,158,11,0.06)', padding: '2px 6px', borderRadius: 4, border: '1px solid rgba(245,158,11,0.12)' }}>
+            {mod.type}
+          </span>
+        )}
       </div>
 
       <div className="props-scroll">
@@ -54,9 +59,9 @@ export default function PropertiesPanel() {
             {/* Header: Back & Close Buttons */}
             <div className="mc-header-row">
               <button className="mc-back-btn" onClick={() => setSelectedId(null)}>
-                <span>◀</span> Back
+                ◀ Back
               </button>
-              <span className="badge">{mod.label}</span>
+              <span className="badge" style={{ maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{mod.label}</span>
               <button className="mc-close-btn" onClick={() => setSelectedId(null)}>✕</button>
             </div>
 
@@ -112,7 +117,7 @@ export default function PropertiesPanel() {
                 <div className="form-row">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <label className="label" style={{ margin: 0 }}>Texture Scale</label>
-                    <span className="slider-value" style={{ fontSize: '0.68rem', minWidth: 'auto' }}>
+                    <span style={{ fontFamily: 'var(--font-display)', fontSize: '0.70rem', fontWeight: 700, color: 'var(--accent-teal)', textShadow: '0 0 8px rgba(6,182,212,0.4)', minWidth: 'auto' }}>
                       {Math.round((mod.textureScale || 1.0) * 100)}%
                     </span>
                   </div>
@@ -126,8 +131,8 @@ export default function PropertiesPanel() {
                 {/* Texture Rotation Slider */}
                 <div className="form-row">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <label className="label" style={{ margin: 0 }}>Texture Rotation</label>
-                    <span className="slider-value" style={{ fontSize: '0.68rem', minWidth: 'auto' }}>
+                    <label className="label" style={{ margin: 0 }}>Tex Rotation</label>
+                    <span style={{ fontFamily: 'var(--font-display)', fontSize: '0.70rem', fontWeight: 700, color: 'var(--accent-violet)', textShadow: '0 0 8px rgba(139,92,246,0.4)', minWidth: 'auto' }}>
                       {mod.textureRotation || 0}°
                     </span>
                   </div>
@@ -146,16 +151,21 @@ export default function PropertiesPanel() {
             {['base_cabinet', 'corner_base', 'drawer_unit', 'island', 'sink', 'stove', 'dishwasher'].includes(mod.type) && (
               <div className="props-group">
                 <label className="label">Countertop Material</label>
-                <div className="mc-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 6 }}>
                   {COUNTERTOPS.map((ct) => (
                     <button
                       key={ct.value}
                       className={`mc-swatch ${mod.countertop === ct.value ? 'active' : ''}`}
-                      style={{ background: ct.gradient, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem' }}
+                      style={{
+                        background: ct.gradient,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: '1.1rem', aspectRatio: '1', borderRadius: 'var(--radius-sm)',
+                        boxShadow: mod.countertop === ct.value ? 'inset 0 0 0 2px var(--accent-primary), 0 0 16px rgba(245,158,11,0.3)' : '0 2px 8px rgba(0,0,0,0.4)'
+                      }}
                       title={ct.label}
                       onClick={() => updateModule(mod.id, { countertop: ct.value })}
                     >
-                      {mod.countertop === ct.value && ct.icon}
+                      {mod.countertop === ct.value && <span style={{ filter: 'drop-shadow(0 0 4px rgba(245,158,11,0.8))' }}>{ct.icon}</span>}
                     </button>
                   ))}
                 </div>
@@ -164,12 +174,12 @@ export default function PropertiesPanel() {
 
             <div className="divider" style={{ margin: '6px 0 10px 0' }} />
 
-            {/* Collapsible/Compact Dimensions */}
+            {/* Dimensions */}
             <div className="props-group">
-              <label className="label">Dimensions (meters)</label>
+              <label className="label">Dimensions (m)</label>
               <div className="dims-grid">
                 <div className="dim-field">
-                  <span className="dim-label">Width</span>
+                  <span className="dim-label dim-label-w">W</span>
                   <input
                     type="number" min={0.05} max={8.0} step={0.05}
                     value={parseFloat(mod.width.toFixed(2))}
@@ -177,7 +187,7 @@ export default function PropertiesPanel() {
                   />
                 </div>
                 <div className="dim-field">
-                  <span className="dim-label">Depth</span>
+                  <span className="dim-label dim-label-d">D</span>
                   <input
                     type="number" min={0.05} max={6.0} step={0.05}
                     value={parseFloat(mod.depth.toFixed(2))}
@@ -185,7 +195,7 @@ export default function PropertiesPanel() {
                   />
                 </div>
                 <div className="dim-field">
-                  <span className="dim-label">Height</span>
+                  <span className="dim-label dim-label-h">H</span>
                   <input
                     type="number" min={0.02} max={5.0} step={0.05}
                     value={parseFloat(mod.height.toFixed(2))}
@@ -195,12 +205,12 @@ export default function PropertiesPanel() {
               </div>
             </div>
 
-            {/* Position Coordinates Placement */}
+            {/* Position Coordinates */}
             <div className="props-group">
-              <label className="label">Placement Coordinates (meters)</label>
-              <div className="dims-grid">
+              <label className="label">Position (m)</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
                 <div className="dim-field">
-                  <span className="dim-label">X Pos</span>
+                  <span className="dim-label dim-label-x">X →</span>
                   <input
                     type="number" step={0.05} min={0} max={12}
                     value={parseFloat(mod.position[0].toFixed(2))}
@@ -208,7 +218,7 @@ export default function PropertiesPanel() {
                   />
                 </div>
                 <div className="dim-field">
-                  <span className="dim-label">Z Pos</span>
+                  <span className="dim-label dim-label-z">Z ↓</span>
                   <input
                     type="number" step={0.05} min={0} max={10}
                     value={parseFloat(mod.position[1].toFixed(2))}
@@ -218,11 +228,11 @@ export default function PropertiesPanel() {
               </div>
             </div>
 
-            {/* Rotation Slider & Presets */}
+            {/* Rotation */}
             <div className="props-group">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                <label className="label" style={{ margin: 0 }}>Rotation Angle</label>
-                <span className="slider-value" style={{ fontSize: '0.68rem', minWidth: 'auto' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <label className="label" style={{ margin: 0 }}>Rotation</label>
+                <span style={{ fontFamily: 'var(--font-display)', fontSize: '0.72rem', fontWeight: 800, color: 'var(--accent-primary)', textShadow: '0 0 10px rgba(245,158,11,0.5)' }}>
                   {mod.rotation}°
                 </span>
               </div>
@@ -265,8 +275,8 @@ export default function PropertiesPanel() {
           </div>
         ) : (
           <div className="empty-state">
-            <div className="empty-state-icon">🖱️</div>
-            <p>Click any module in the floor plan or 3D view to edit its properties</p>
+            <div className="empty-state-icon" style={{ fontSize: '2.4rem', filter: 'drop-shadow(0 0 12px rgba(245,158,11,0.3))' }}>✦</div>
+            <p style={{ color: 'var(--text-muted)', lineHeight: 1.7 }}>Select any item in the <strong style={{ color: 'var(--accent-primary)' }}>2D plan</strong> or <strong style={{ color: 'var(--accent-teal)' }}>3D view</strong> to edit properties</p>
           </div>
         )}
 
@@ -274,7 +284,12 @@ export default function PropertiesPanel() {
 
         {/* Design Actions */}
         <div className="props-group">
-          <label className="label">Design ({modules.length} modules)</label>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+            <label className="label" style={{ margin: 0 }}>Project</label>
+            <span style={{ fontFamily: 'var(--font-display)', fontSize: '0.68rem', fontWeight: 700, color: 'var(--accent-primary)', background: 'var(--accent-glow)', padding: '2px 8px', borderRadius: 100, border: '1px solid var(--border-accent)', textShadow: '0 0 8px rgba(245,158,11,0.4)' }}>
+              {modules.length} items
+            </span>
+          </div>
           <div className="action-buttons">
             <button className="btn-primary" style={{ width: '100%', justifyContent: 'center' }} onClick={saveDesign}>
               💾 Save Design

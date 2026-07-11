@@ -334,8 +334,10 @@ export default function Toolbar() {
       {/* Brand */}
       <div className="toolbar-brand">
         <span className="toolbar-brand-icon"><IconBrand /></span>
-        <span className="toolbar-brand-name">KitchenCraft</span>
-        <span className="toolbar-brand-tag">3D</span>
+        <div className="toolbar-brand-text">
+          <span className="toolbar-brand-name">KitchenCraft</span>
+          <span className="toolbar-brand-tag">3D PRO</span>
+        </div>
       </div>
 
       {/* View Switcher */}
