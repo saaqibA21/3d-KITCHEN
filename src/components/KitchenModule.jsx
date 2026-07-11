@@ -2,7 +2,7 @@ import React, { useRef, useMemo, useState, useEffect } from 'react';
 import { Entity } from '@playcanvas/react';
 import { Render } from '@playcanvas/react/components';
 import { useMaterial, useApp, useAppEvent } from '@playcanvas/react/hooks';
-import { Vec2, math, BLEND_NORMAL, Texture, PIXELFORMAT_R8_G8_B8_A8, Mesh, MeshInstance } from 'playcanvas';
+import { Vec2, math, BLEND_NORMAL, Texture, PIXELFORMAT_R8_G8_B8_A8, Mesh, MeshInstance, StandardMaterial, Color } from 'playcanvas';
 import useKitchenStore from '../store/kitchenStore';
 import { SinkModel, StoveModel, RefrigeratorModel, OvenModel, DishwasherModel } from './Appliances';
 import { getCabinetTexture, getCountertopTexture } from '../utils/textures';
@@ -398,32 +398,62 @@ function RangeHood({ mod, isSelected, app }) {
 
 // ─── Custom AI Object Renderer ───────────────────────────────────────────────
 function useCustomAiMaterial(app, imageUrl) {
-  const [texture, setTexture] = useState(null);
+  const matRef = useRef(null);
+  const [, forceUpdate] = useState(0);
 
   useEffect(() => {
+    if (!app || !app.graphicsDevice) return;
+
+    // Create / reuse material imperatively
+    if (!matRef.current) {
+      const m = new StandardMaterial();
+      m.roughness = 0.55;
+      m.metalness = 0.08;
+      m.update();
+      matRef.current = m;
+    }
+
     if (!imageUrl) return;
+
     const img = new Image();
+    img.crossOrigin = 'anonymous';
     img.src = imageUrl;
     img.onload = () => {
-      if (!app || !app.graphicsDevice) return;
-      const tex = new Texture(app.graphicsDevice, {
-        width: img.width,
-        height: img.height,
-        format: PIXELFORMAT_R8_G8_B8_A8,
-        autoMipmap: true
-      });
-      tex.setSource(img);
-      setTexture(tex);
+      if (!app.graphicsDevice) return;
+      try {
+        const tex = new Texture(app.graphicsDevice, {
+          width: img.naturalWidth  || img.width,
+          height: img.naturalHeight || img.height,
+          format: PIXELFORMAT_R8_G8_B8_A8,
+          autoMipmap: true,
+          flipY: true,
+        });
+        tex.setSource(img);
+        tex.upload();
+        const m = matRef.current;
+        m.diffuseMap = tex;
+        m.diffuse = new Color(1, 1, 1);
+        m.update();
+        forceUpdate(n => n + 1); // trigger a re-render so Render components pick up the new mat
+      } catch (e) {
+        console.warn('CustomAiMat texture error:', e);
+      }
+    };
+    img.onerror = () => {
+      console.warn('CustomAiMat: failed to load image', imageUrl);
     };
   }, [app, imageUrl]);
 
-  const mat = useMaterial({
-    diffuseMap: texture || undefined,
-    roughness: 0.6,
-    metalness: 0.1,
-  });
+  // Ensure material exists even on first render (before image loads)
+  if (!matRef.current && app && app.graphicsDevice) {
+    const m = new StandardMaterial();
+    m.diffuse = new Color(0.6, 0.6, 0.6);
+    m.roughness = 0.6;
+    m.update();
+    matRef.current = m;
+  }
 
-  return mat;
+  return matRef.current;
 }
 
 // ─── Sub-Models ───
@@ -708,7 +738,11 @@ function GlbModelRenderer({ url, mod, isSelected, app }) {
 function CustomAiObjectModel({ mod, isSelected, app }) {
   const { w, h, d } = { w: mod.width, h: mod.height, d: mod.depth };
   const customMat = useCustomAiMaterial(app, mod.customImageUrl);
-  const neutralMat = useMaterial({ diffuse: hexToColor('#b0b0b0'), roughness: 0.4, metalness: 0.2 });
+  const sideMat = useMaterial({ diffuse: hexToColor('#1a1a1a'), roughness: 0.7, metalness: 0.15 });
+  const topMat  = useMaterial({ diffuse: hexToColor('#2a2a2a'), roughness: 0.6, metalness: 0.1 });
+  const legMat  = useMaterial({ diffuse: hexToColor('#111111'), roughness: 0.3, metalness: 0.8 });
+
+  if (!customMat) return null;
 
   if (mod.objectType === 'glb') {
     return <GlbModelRenderer url={mod.glbUrl} mod={mod} isSelected={isSelected} app={app} />;
@@ -717,10 +751,49 @@ function CustomAiObjectModel({ mod, isSelected, app }) {
     return <LampModel w={w} h={h} d={d} customMat={customMat} profile={mod.silhouetteProfile} isSelected={isSelected} />;
   }
   if (mod.objectType === 'stool') {
-    return <StoolModel w={w} h={h} d={d} customMat={customMat} isSelected={isSelected} />;
+    // Sophisticated chair with seat, back, and 4 legs
+    const legR = 0.022;
+    const seatH = h * 0.55;
+    const backH = h - seatH;
+    return (
+      <Entity name="custom-stool">
+        {/* Seat cushion */}
+        <Entity position={[0, seatH, 0]} scale={[w, 0.08, d]}>
+          <Render type="box" material={customMat} castShadows receiveShadows />
+        </Entity>
+        {/* Backrest */}
+        <Entity position={[0, seatH + backH / 2 + 0.04, -d / 2 + 0.02]} scale={[w, backH, 0.04]}>
+          <Render type="box" material={customMat} castShadows />
+        </Entity>
+        {/* 4 Legs */}
+        {[[-1,-1],[1,-1],[-1,1],[1,1]].map(([sx,sz],i) => (
+          <Entity key={i} position={[sx*(w/2-legR), seatH/2, sz*(d/2-legR)]} scale={[legR*2, seatH, legR*2]}>
+            <Render type="box" material={legMat} castShadows />
+          </Entity>
+        ))}
+        {isSelected && <SelectionBox width={w} height={h} depth={d} />}
+      </Entity>
+    );
   }
   if (mod.objectType === 'table') {
-    return <TableModel w={w} h={h} d={d} customMat={customMat} isSelected={isSelected} />;
+    // Table with tabletop and 4 legs
+    const tableTopH = 0.05;
+    const legR = 0.03;
+    return (
+      <Entity name="custom-table">
+        {/* Tabletop */}
+        <Entity position={[0, h - tableTopH/2, 0]} scale={[w, tableTopH, d]}>
+          <Render type="box" material={customMat} castShadows receiveShadows />
+        </Entity>
+        {/* 4 Legs */}
+        {[[-1,-1],[1,-1],[-1,1],[1,1]].map(([sx,sz],i) => (
+          <Entity key={i} position={[sx*(w/2-legR*2), (h-tableTopH)/2, sz*(d/2-legR*2)]} scale={[legR*2, h-tableTopH, legR*2]}>
+            <Render type="box" material={legMat} castShadows />
+          </Entity>
+        ))}
+        {isSelected && <SelectionBox width={w} height={h} depth={d} />}
+      </Entity>
+    );
   }
   if (mod.objectType === 'plant') {
     return <PlantModel w={w} h={h} d={d} customMat={customMat} isSelected={isSelected} />;
@@ -728,7 +801,7 @@ function CustomAiObjectModel({ mod, isSelected, app }) {
   if (mod.objectType === 'billboard') {
     return (
       <Entity name="custom-billboard">
-        <Entity position={[0, h / 2, 0]} scale={[w, h, 0.005]}>
+        <Entity position={[0, h / 2, 0]} scale={[w, h, 0.006]}>
           <Render type="box" material={customMat} castShadows receiveShadows />
         </Entity>
         {isSelected && <SelectionBox width={w} height={h} depth={d} />}
@@ -736,15 +809,20 @@ function CustomAiObjectModel({ mod, isSelected, app }) {
     );
   }
 
+  // Default: solid appliance box — image projected on ALL 6 faces
   return (
     <Entity name="custom-appliance">
-      {/* Front face projection */}
-      <Entity position={[0, h / 2, d / 2 - 0.002]} scale={[w, h, 0.004]}>
-        <Render type="box" material={customMat} castShadows />
+      {/* Main body with image texture on all faces */}
+      <Entity position={[0, h / 2, 0]} scale={[w, h, d]}>
+        <Render type="box" material={customMat} castShadows receiveShadows />
       </Entity>
-      {/* Back and side casing */}
-      <Entity position={[0, h / 2, -0.002]} scale={[w - 0.004, h - 0.004, d - 0.004]}>
-        <Render type="box" material={neutralMat} castShadows receiveShadows />
+      {/* Top cap (slightly darker) */}
+      <Entity position={[0, h + 0.002, 0]} scale={[w + 0.002, 0.005, d + 0.002]}>
+        <Render type="box" material={topMat} castShadows />
+      </Entity>
+      {/* Thin bottom base */}
+      <Entity position={[0, 0.018, 0]} scale={[w - 0.02, 0.036, d - 0.02]}>
+        <Render type="box" material={sideMat} castShadows receiveShadows />
       </Entity>
       {isSelected && <SelectionBox width={w} height={h} depth={d} />}
     </Entity>
