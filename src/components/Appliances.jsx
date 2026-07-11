@@ -1,8 +1,8 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useEffect, useState } from 'react';
 import { Entity } from '@playcanvas/react';
 import { Render } from '@playcanvas/react/components';
 import { useMaterial } from '@playcanvas/react/hooks';
-import { Color, Vec2 } from 'playcanvas';
+import { Color, Vec2, StandardMaterial } from 'playcanvas';
 import { getCabinetTexture, getCountertopTexture } from '../utils/textures';
 
 export function hexToColor(hex) {
@@ -13,26 +13,118 @@ export function hexToColor(hex) {
   return new Color(r, g, b);
 }
 
+const MAT_PROPS = {
+  matte:      { roughness: 0.88, metalness: 0.00 },
+  glossy:     { roughness: 0.05, metalness: 0.08 },
+  wood_grain: { roughness: 0.72, metalness: 0.00 },
+  concrete:   { roughness: 0.95, metalness: 0.00 },
+};
+
+const CT_PROPS = {
+  granite:  { roughness: 0.28, metalness: 0.05 },
+  marble:   { roughness: 0.18, metalness: 0.04 },
+  quartz:   { roughness: 0.22, metalness: 0.04 },
+  laminate: { roughness: 0.55, metalness: 0.00 },
+};
+
+function useCabinetMat(app, mod) {
+  const matRef = useRef(null);
+  const [, tick] = useState(0);
+  const { color = '#e8dcc8', material = 'matte', textureScale = 1.0, textureRotation = 0 } = mod;
+
+  useEffect(() => {
+    if (!app || !app.graphicsDevice) return;
+
+    if (!matRef.current) {
+      matRef.current = new StandardMaterial();
+    }
+    const m = matRef.current;
+
+    const pc = hexToColor(color);
+    m.diffuse = new Color(pc.r, pc.g, pc.b);
+
+    const tex = getCabinetTexture(app, material, color);
+    if (tex) {
+      m.diffuseMap = tex;
+      m.diffuseMapTiling = new Vec2(2 * textureScale, 2 * textureScale);
+      m.diffuseMapRotation = textureRotation;
+      m.diffuse = new Color(1, 1, 1);
+    } else {
+      m.diffuseMap = null;
+      m.diffuseMapTiling = undefined;
+    }
+
+    const props = MAT_PROPS[material] || MAT_PROPS.matte;
+    m.roughness = props.roughness;
+    m.metalness = props.metalness;
+
+    if (material === 'glossy') {
+      m.specular = new Color(0.9, 0.9, 0.9);
+      m.shininess = 85;
+    } else {
+      m.specular = new Color(0.1, 0.1, 0.1);
+      m.shininess = 10;
+    }
+
+    m.update();
+    tick(n => n + 1);
+  }, [app, color, material, textureScale, textureRotation]);
+
+  if (!matRef.current && app && app.graphicsDevice) {
+    const m = new StandardMaterial();
+    const pc = hexToColor(color);
+    m.diffuse = new Color(pc.r, pc.g, pc.b);
+    m.update();
+    matRef.current = m;
+  }
+  return matRef.current;
+}
+
+function useCountertopMat(app, mod) {
+  const matRef = useRef(null);
+  const [, tick] = useState(0);
+  const { countertop = 'granite', color, textureScale = 1.0 } = mod;
+
+  useEffect(() => {
+    if (!app || !app.graphicsDevice) return;
+
+    if (!matRef.current) {
+      matRef.current = new StandardMaterial();
+    }
+    const m = matRef.current;
+
+    const tex = getCountertopTexture(app, countertop, color || '#888888');
+    if (tex) {
+      m.diffuseMap = tex;
+      m.diffuse = new Color(1, 1, 1);
+      m.diffuseMapTiling = new Vec2(1.5 * textureScale, 1.5 * textureScale);
+    } else {
+      m.diffuseMap = null;
+      m.diffuse = new Color(0.4, 0.4, 0.4);
+    }
+
+    const props = CT_PROPS[countertop] || CT_PROPS.granite;
+    m.roughness = props.roughness;
+    m.metalness = props.metalness;
+    m.update();
+    tick(n => n + 1);
+  }, [app, countertop, color, textureScale]);
+
+  if (!matRef.current && app && app.graphicsDevice) {
+    const m = new StandardMaterial();
+    m.diffuse = new Color(0.4, 0.4, 0.4);
+    m.roughness = 0.3;
+    m.update();
+    matRef.current = m;
+  }
+  return matRef.current;
+}
+
 // ── Sink Appliance ────────────────────────────────────────────────────────────
 export function SinkModel({ mod, app }) {
   const { width: w, height: h, depth: d } = mod;
-  
-  const cabTex = useMemo(() => getCabinetTexture(app, mod.material || 'matte', mod.color || '#e8dcc8'), [app, mod.material, mod.color]);
-  const ctTex = useMemo(() => getCountertopTexture(app, mod.countertop || 'granite', '#888888'), [app, mod.countertop]);
-
-  const bodyMat = useMaterial({
-    diffuse: cabTex ? undefined : hexToColor(mod.color || '#e8dcc8'),
-    diffuseMap: cabTex || undefined,
-    roughness: 0.8,
-    diffuseMapTiling: cabTex ? new Vec2(2, 2) : undefined
-  });
-
-  const ctMat = useMaterial({
-    diffuse: ctTex ? undefined : hexToColor('#f0ede8'),
-    diffuseMap: ctTex || undefined,
-    roughness: 0.2,
-    diffuseMapTiling: ctTex ? new Vec2(1.5, 1.5) : undefined
-  });
+  const bodyMat = useCabinetMat(app, mod);
+  const ctMat = useCountertopMat(app, mod);
 
   const basinMat = useMaterial({ diffuse: hexToColor('#b8b8b8'), roughness: 0.2, metalness: 0.6 });
   const blackMat = useMaterial({ diffuse: hexToColor('#1a1a1a'), roughness: 0.5 });
@@ -72,23 +164,8 @@ export function SinkModel({ mod, app }) {
 // ── Stove Appliance ───────────────────────────────────────────────────────────
 export function StoveModel({ mod, app }) {
   const { width: w, height: h, depth: d } = mod;
-  
-  const cabTex = useMemo(() => getCabinetTexture(app, mod.material || 'matte', mod.color || '#e8dcc8'), [app, mod.material, mod.color]);
-  const ctTex = useMemo(() => getCountertopTexture(app, mod.countertop || 'granite', '#888888'), [app, mod.countertop]);
-
-  const bodyMat = useMaterial({
-    diffuse: cabTex ? undefined : hexToColor(mod.color || '#e8dcc8'),
-    diffuseMap: cabTex || undefined,
-    roughness: 0.8,
-    diffuseMapTiling: cabTex ? new Vec2(2, 2) : undefined
-  });
-
-  const ctMat = useMaterial({
-    diffuse: ctTex ? undefined : hexToColor('#f0ede8'),
-    diffuseMap: ctTex || undefined,
-    roughness: 0.2,
-    diffuseMapTiling: ctTex ? new Vec2(1.5, 1.5) : undefined
-  });
+  const bodyMat = useCabinetMat(app, mod);
+  const ctMat = useCountertopMat(app, mod);
 
   const surfaceMat = useMaterial({ diffuse: hexToColor('#111111'), roughness: 0.1, metalness: 0.1 });
   const burnerMat = useMaterial({ diffuse: hexToColor('#1a1a1a'), roughness: 0.3, metalness: 0.3 });
@@ -130,10 +207,10 @@ export function StoveModel({ mod, app }) {
 }
 
 // ── Refrigerator Appliance ────────────────────────────────────────────────────
-export function RefrigeratorModel({ mod }) {
+export function RefrigeratorModel({ mod, app }) {
   const { width: w, height: h, depth: d } = mod;
+  const bodyMat = useCabinetMat(app, mod);
 
-  const bodyMat = useMaterial({ diffuse: hexToColor('#d0d0d0'), roughness: 0.2, metalness: 0.1 });
   const doorMat = useMaterial({ diffuse: hexToColor('#c8c8c8'), roughness: 0.1, metalness: 0.15 });
   const handleMat = useMaterial({ diffuse: hexToColor('#909090'), roughness: 0.1, metalness: 0.7 });
   const dividerMat = useMaterial({ diffuse: hexToColor('#aaaaaa'), roughness: 0.3 });
@@ -169,10 +246,10 @@ export function RefrigeratorModel({ mod }) {
 }
 
 // ── Oven Appliance ────────────────────────────────────────────────────────────
-export function OvenModel({ mod }) {
+export function OvenModel({ mod, app }) {
   const { width: w, height: h, depth: d } = mod;
+  const bodyMat = useCabinetMat(app, mod);
 
-  const bodyMat = useMaterial({ diffuse: hexToColor('#1e1e1e'), roughness: 0.5 });
   const glassMat = useMaterial({ diffuse: hexToColor('#0a1a2a'), roughness: 0.05, opacity: 0.7, blendType: 'normal' });
   const handleMat = useMaterial({ diffuse: hexToColor('#888888'), roughness: 0.1, metalness: 0.7 });
   const stripMat = useMaterial({ diffuse: hexToColor('#2a2a2a'), roughness: 0.4 });
@@ -199,10 +276,10 @@ export function OvenModel({ mod }) {
 }
 
 // ── Dishwasher Appliance ──────────────────────────────────────────────────────
-export function DishwasherModel({ mod }) {
+export function DishwasherModel({ mod, app }) {
   const { width: w, height: h, depth: d } = mod;
+  const bodyMat = useCabinetMat(app, mod);
 
-  const bodyMat = useMaterial({ diffuse: hexToColor('#c8c8c8'), roughness: 0.2, metalness: 0.1 });
   const doorMat = useMaterial({ diffuse: hexToColor('#d4d4d4'), roughness: 0.1, metalness: 0.2 });
   const stripMat = useMaterial({ diffuse: hexToColor('#1a1a1a'), roughness: 0.3 });
   const handleMat = useMaterial({ diffuse: hexToColor('#909090'), roughness: 0.1, metalness: 0.7 });
