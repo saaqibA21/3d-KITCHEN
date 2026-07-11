@@ -10,9 +10,14 @@ const COUNTERTOPS = [
 ];
 
 const PRESET_COLORS = [
-  '#f5f0e8', '#e8dcc8', '#d4c5b0',
-  '#2d2d2d', '#1a1a2e', '#c8e8d4',
-  '#c8d4e8', '#f0e6d3',
+  '#f5f0e8', '#e8dcc8', '#d4c5b0', // Warm neutrals
+  '#3a322c', '#5c3a21', '#8b5a2b', // Wood tints
+  '#2d2d2d', '#111111', '#4a5054', // Greys / Charcoals
+  '#1e293b', '#1e3a8a', '#60a5fa', // Blues
+  '#365314', '#15803d', '#86efac', // Greens
+  '#7f1d1d', '#b91c1c', '#fca5a5', // Reds / Pinks
+  '#7c2d12', '#ea580c', '#ffedd5', // Orange / Peach
+  '#fef08a', '#facc15', '#eab308'  // Yellows
 ];
 
 const CUSTOMIZER_CATEGORIES = [
@@ -161,38 +166,72 @@ export default function PropertiesPanel() {
 
             {/* Collapsible/Compact Dimensions */}
             <div className="props-group">
-              <label className="label">Dimensions</label>
+              <label className="label">Dimensions (meters)</label>
               <div className="dims-grid">
                 <div className="dim-field">
                   <span className="dim-label">Width</span>
                   <input
-                    type="number" min={0.3} max={3} step={0.05}
+                    type="number" min={0.05} max={8.0} step={0.05}
                     value={parseFloat(mod.width.toFixed(2))}
-                    onChange={(e) => updateModule(mod.id, { width: parseFloat(e.target.value) })}
+                    onChange={(e) => updateModule(mod.id, { width: parseFloat(e.target.value) || 0.1 })}
                   />
                 </div>
                 <div className="dim-field">
                   <span className="dim-label">Depth</span>
                   <input
-                    type="number" min={0.3} max={2} step={0.05}
+                    type="number" min={0.05} max={6.0} step={0.05}
                     value={parseFloat(mod.depth.toFixed(2))}
-                    onChange={(e) => updateModule(mod.id, { depth: parseFloat(e.target.value) })}
+                    onChange={(e) => updateModule(mod.id, { depth: parseFloat(e.target.value) || 0.1 })}
                   />
                 </div>
                 <div className="dim-field">
                   <span className="dim-label">Height</span>
                   <input
-                    type="number" min={0.3} max={3} step={0.05}
+                    type="number" min={0.02} max={5.0} step={0.05}
                     value={parseFloat(mod.height.toFixed(2))}
-                    onChange={(e) => updateModule(mod.id, { height: parseFloat(e.target.value) })}
+                    onChange={(e) => updateModule(mod.id, { height: parseFloat(e.target.value) || 0.1 })}
                   />
                 </div>
               </div>
             </div>
 
-            {/* Rotation Row */}
+            {/* Position Coordinates Placement */}
             <div className="props-group">
-              <label className="label">Cabinet Rotation</label>
+              <label className="label">Placement Coordinates (meters)</label>
+              <div className="dims-grid">
+                <div className="dim-field">
+                  <span className="dim-label">X Pos</span>
+                  <input
+                    type="number" step={0.05} min={0} max={12}
+                    value={parseFloat(mod.position[0].toFixed(2))}
+                    onChange={(e) => updateModule(mod.id, { position: [parseFloat(e.target.value) || 0, mod.position[1]] })}
+                  />
+                </div>
+                <div className="dim-field">
+                  <span className="dim-label">Z Pos</span>
+                  <input
+                    type="number" step={0.05} min={0} max={10}
+                    value={parseFloat(mod.position[1].toFixed(2))}
+                    onChange={(e) => updateModule(mod.id, { position: [mod.position[0], parseFloat(e.target.value) || 0] })}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Rotation Slider & Presets */}
+            <div className="props-group">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                <label className="label" style={{ margin: 0 }}>Rotation Angle</label>
+                <span className="slider-value" style={{ fontSize: '0.68rem', minWidth: 'auto' }}>
+                  {mod.rotation}°
+                </span>
+              </div>
+              <input
+                type="range" min="0" max="360" step="5"
+                value={mod.rotation || 0}
+                onChange={(e) => updateModule(mod.id, { rotation: parseInt(e.target.value) })}
+                style={{ marginBottom: 10 }}
+              />
               <div className="rotation-row">
                 {[0, 90, 180, 270].map((r) => (
                   <button
@@ -207,7 +246,7 @@ export default function PropertiesPanel() {
             </div>
 
             {/* Door Action */}
-            {['base_cabinet','wall_cabinet','tall_cabinet','glass_cabinet'].includes(mod.type) && (
+            {['base_cabinet','wall_cabinet','tall_cabinet','glass_cabinet','door'].includes(mod.type) && (
               <div className="props-group" style={{ marginBottom: 12 }}>
                 <button
                   className={`btn-secondary ${mod.doorOpen ? 'active-green' : ''}`}
@@ -221,7 +260,7 @@ export default function PropertiesPanel() {
 
             {/* Delete */}
             <button className="btn-danger" style={{ width: '100%', justifyContent: 'center', marginTop: 6 }} onClick={() => removeModule(mod.id)}>
-              🗑️ Remove Cabinet
+              🗑️ Remove Item
             </button>
           </div>
         ) : (
