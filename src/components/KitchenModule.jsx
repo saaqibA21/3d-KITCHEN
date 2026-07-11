@@ -622,11 +622,97 @@ function PlantModel({ w, h, d, customMat, isSelected }) {
   );
 }
 
+function GlbModelRenderer({ url, mod, isSelected, app }) {
+  const { w, h, d } = { w: mod.width, h: mod.height, d: mod.depth };
+  const parentRef = useRef();
+  const loadedModelRef = useRef(null);
+
+  useEffect(() => {
+    if (!app || !url) return;
+    
+    let active = true;
+    app.assets.loadFromUrl(url, 'container', (err, asset) => {
+      if (err) {
+        console.error("Failed to load GLB:", err);
+        return;
+      }
+      if (!active) return;
+      if (!parentRef.current) return;
+
+      if (loadedModelRef.current) {
+        loadedModelRef.current.destroy();
+      }
+
+      try {
+        const entity = asset.resource.instantiateRenderEntity({
+          castShadows: true,
+          receiveShadows: true
+        });
+        
+        let minX = Infinity, minY = Infinity, minZ = Infinity;
+        let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+        const renders = entity.findComponents('render');
+        renders.forEach((r) => {
+          r.meshInstances.forEach((mi) => {
+            const aabb = mi.aabb;
+            const min = aabb.getMin();
+            const max = aabb.getMax();
+            minX = Math.min(minX, min.x);
+            minY = Math.min(minY, min.y);
+            minZ = Math.min(minZ, min.z);
+            maxX = Math.max(maxX, max.x);
+            maxY = Math.max(maxY, max.y);
+            maxZ = Math.max(maxZ, max.z);
+          });
+        });
+
+        if (minX !== Infinity) {
+          const modelW = maxX - minX;
+          const modelH = maxY - minY;
+          const modelD = maxZ - minZ;
+
+          const scaleX = modelW > 0 ? w / modelW : 1.0;
+          const scaleY = modelH > 0 ? h / modelH : 1.0;
+          const scaleZ = modelD > 0 ? d / modelD : 1.0;
+          
+          entity.setLocalScale(scaleX, scaleY, scaleZ);
+          
+          const centerX = (minX + maxX) / 2;
+          const centerY = minY;
+          const centerZ = (minZ + maxZ) / 2;
+          entity.setLocalPosition(-centerX * scaleX, -centerY * scaleY, -centerZ * scaleZ);
+        }
+
+        parentRef.current.addChild(entity);
+        loadedModelRef.current = entity;
+      } catch (e) {
+        console.error("Failed to instantiate GLB render entity:", e);
+      }
+    });
+
+    return () => {
+      active = false;
+      if (loadedModelRef.current) {
+        loadedModelRef.current.destroy();
+      }
+    };
+  }, [app, url, w, h, d]);
+
+  return (
+    <Entity ref={parentRef} name="glb-container">
+      {isSelected && <SelectionBox width={w} height={h} depth={d} />}
+    </Entity>
+  );
+}
+
 function CustomAiObjectModel({ mod, isSelected, app }) {
   const { w, h, d } = { w: mod.width, h: mod.height, d: mod.depth };
   const customMat = useCustomAiMaterial(app, mod.customImageUrl);
   const neutralMat = useMaterial({ diffuse: hexToColor('#b0b0b0'), roughness: 0.4, metalness: 0.2 });
 
+  if (mod.objectType === 'glb') {
+    return <GlbModelRenderer url={mod.glbUrl} mod={mod} isSelected={isSelected} app={app} />;
+  }
   if (mod.objectType === 'lamp') {
     return <LampModel w={w} h={h} d={d} customMat={customMat} profile={mod.silhouetteProfile} isSelected={isSelected} />;
   }

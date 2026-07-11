@@ -170,6 +170,37 @@ const TILE_PATTERNS = [
   { id: 'hex',    label: 'Hexagon' },
 ];
 
+const GLB_PRESETS = [
+  {
+    id: 'sheen_chair',
+    label: 'Sheen Accent Chair',
+    url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/SheenChair/glTF-Binary/SheenChair.glb',
+    preview: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/SheenChair/screenshot/screenshot.png',
+    width: 0.8, height: 0.85, depth: 0.8
+  },
+  {
+    id: 'refrigerator',
+    label: 'Commercial Refrigerator',
+    url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/CommercialRefrigerator/glTF-Binary/CommercialRefrigerator.glb',
+    preview: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/CommercialRefrigerator/screenshot/screenshot.jpg',
+    width: 1.0, height: 1.9, depth: 0.85
+  },
+  {
+    id: 'lamp',
+    label: 'Stained Glass Lamp',
+    url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/StainedGlassLamp/glTF-Binary/StainedGlassLamp.glb',
+    preview: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/StainedGlassLamp/screenshot/screenshot.png',
+    width: 0.45, height: 0.7, depth: 0.45
+  },
+  {
+    id: 'pouf',
+    label: 'Specular Silk Pouf (Ottoman)',
+    url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/SpecularSilkPouf/glTF-Binary/SpecularSilkPouf.glb',
+    preview: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/SpecularSilkPouf/screenshot/screenshot.png',
+    width: 0.6, height: 0.45, depth: 0.6
+  }
+];
+
 export default function Sidebar() {
   const {
     roomConfig, setRoomConfig,
@@ -195,7 +226,49 @@ export default function Sidebar() {
   const [customImage, setCustomImage] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
+  const [sourceType, setSourceType] = useState('glb'); // 'ai' | 'glb'
+  const [selectedPresetModel, setSelectedPresetModel] = useState('sheen_chair');
+  const [customGlbUrl, setCustomGlbUrl] = useState('');
+
   const handleGenerateCustom = () => {
+    if (sourceType === 'glb') {
+      let url = '';
+      let preview = '';
+      if (selectedPresetModel === 'custom') {
+        url = customGlbUrl;
+        preview = 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/SheenChair/screenshot/screenshot.png';
+      } else {
+        const preset = GLB_PRESETS.find(p => p.id === selectedPresetModel);
+        if (preset) {
+          url = preset.url;
+          preview = preset.preview;
+        }
+      }
+
+      if (!url) {
+        alert("Please enter a valid GLB Model URL!");
+        return;
+      }
+
+      setIsGenerating(true);
+      setTimeout(() => {
+        const newObj = {
+          id: `glb_${Date.now()}`,
+          label: customName || 'Custom 3D Model',
+          width: customWidth,
+          height: customHeight,
+          depth: customDepth,
+          objectType: 'glb',
+          imageUrl: preview,
+          glbUrl: url
+        };
+        addCustomAiObject(newObj);
+        setIsGenerating(false);
+        alert(`✨ 3D glTF Model Added:\nSuccessfully added "${newObj.label}" to your custom catalog!`);
+      }, 800);
+      return;
+    }
+
     if (!customImage) {
       alert("Please upload a furniture/appliance image first!");
       return;
@@ -740,35 +813,110 @@ export default function Sidebar() {
         {/* ── CUSTOM TAB ─────────────────────────────────── */}
         {activeTab === 'custom' && (
           <div className="sidebar-section animate-slide-up">
-            <h3 className="sidebar-section-title">🪄 AI Furniture Generator</h3>
+            <h3 className="sidebar-section-title">🪄 AI & 3D Object Loader</h3>
             
             <div className="form-row">
-              <label className="label">Object Image</label>
-              <div style={{ position: 'relative', width: '100%' }}>
-                <div className="mc-add-swatch" style={{ width: '100%', height: 120, flexDirection: 'column', gap: 8, fontSize: '0.8rem', borderStyle: 'dashed' }}>
-                  {customImage ? (
-                    <img src={customImage} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: 'var(--radius-sm)' }} />
-                  ) : (
-                    <>
-                      <span>📤</span>
-                      <span>Upload Image File</span>
-                    </>
-                  )}
-                  <input
-                    type="file" accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files[0];
-                      if (file) {
-                        const r = new FileReader();
-                        r.onload = (ev) => setCustomImage(ev.target.result);
-                        r.readAsDataURL(file);
-                      }
-                    }}
-                    style={{ position: 'absolute', opacity: 0, width: '100%', height: '100%', cursor: 'pointer', left: 0, top: 0 }}
-                  />
-                </div>
+              <label className="label">Source Type</label>
+              <div style={{ display: 'flex', gap: 6, marginBottom: 4 }}>
+                <button
+                  className={`btn-secondary ${sourceType === 'glb' ? 'active' : ''}`}
+                  style={{ flex: 1, justifyContent: 'center', fontSize: '0.72rem', padding: '6px 8px', background: sourceType === 'glb' ? 'rgba(60, 98, 85, 0.15)' : undefined }}
+                  onClick={() => setSourceType('glb')}
+                >
+                  📦 Load glTF/GLB
+                </button>
+                <button
+                  className={`btn-secondary ${sourceType === 'ai' ? 'active' : ''}`}
+                  style={{ flex: 1, justifyContent: 'center', fontSize: '0.72rem', padding: '6px 8px', background: sourceType === 'ai' ? 'rgba(60, 98, 85, 0.15)' : undefined }}
+                  onClick={() => setSourceType('ai')}
+                >
+                  🪄 Image Scan
+                </button>
               </div>
             </div>
+
+            {sourceType === 'glb' ? (
+              <>
+                <div className="form-row">
+                  <label className="label">Select 3D Model</label>
+                  <select value={selectedPresetModel} onChange={(e) => {
+                    const val = e.target.value;
+                    setSelectedPresetModel(val);
+                    if (val !== 'custom') {
+                      const preset = GLB_PRESETS.find(p => p.id === val);
+                      if (preset) {
+                        setCustomName(preset.label);
+                        setCustomWidth(preset.width);
+                        setCustomHeight(preset.height);
+                        setCustomDepth(preset.depth);
+                      }
+                    }
+                  }}>
+                    {GLB_PRESETS.map(p => (
+                      <option key={p.id} value={p.id}>{p.label}</option>
+                    ))}
+                    <option value="custom">Custom GLB URL...</option>
+                  </select>
+                </div>
+
+                {selectedPresetModel === 'custom' && (
+                  <div className="form-row">
+                    <label className="label">GLB File URL</label>
+                    <input
+                      type="text" value={customGlbUrl}
+                      onChange={(e) => setCustomGlbUrl(e.target.value)}
+                      placeholder="https://example.com/model.glb"
+                      style={{ fontSize: '0.72rem', padding: '6px 8px', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-sm)' }}
+                    />
+                    <p style={{ fontSize: '0.62rem', color: 'var(--text-muted)', marginTop: 4, lineHeight: 1.3 }}>
+                      💡 Paste any public glTF/GLB download link from Poly Haven, Sweet Home 3D, or GitHub.
+                    </p>
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                <div className="form-row">
+                  <label className="label">Object Image</label>
+                  <div style={{ position: 'relative', width: '100%' }}>
+                    <div className="mc-add-swatch" style={{ width: '100%', height: 120, flexDirection: 'column', gap: 8, fontSize: '0.8rem', borderStyle: 'dashed' }}>
+                      {customImage ? (
+                        <img src={customImage} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: 'var(--radius-sm)' }} />
+                      ) : (
+                        <>
+                          <span>📤</span>
+                          <span>Upload Image File</span>
+                        </>
+                      )}
+                      <input
+                        type="file" accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (file) {
+                            const r = new FileReader();
+                            r.onload = (ev) => setCustomImage(ev.target.result);
+                            r.readAsDataURL(file);
+                          }
+                        }}
+                        style={{ position: 'absolute', opacity: 0, width: '100%', height: '100%', cursor: 'pointer', left: 0, top: 0 }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <label className="label">Model Style</label>
+                  <select value={customType} onChange={(e) => setCustomType(e.target.value)}>
+                    <option value="appliance">Solid Appliance Box</option>
+                    <option value="lamp">Table Lamp</option>
+                    <option value="stool">Chair / Stool</option>
+                    <option value="table">Dining Table</option>
+                    <option value="plant">Potted Plant</option>
+                    <option value="billboard">Flat Decor Billboard</option>
+                  </select>
+                </div>
+              </>
+            )}
 
             <div className="form-row">
               <label className="label">Object Name</label>
@@ -776,19 +924,8 @@ export default function Sidebar() {
                 type="text" value={customName}
                 onChange={(e) => setCustomName(e.target.value)}
                 placeholder="e.g. Vintage Refrigerator"
+                style={{ fontSize: '0.75rem', padding: '6px 8px', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-sm)' }}
               />
-            </div>
-
-            <div className="form-row">
-              <label className="label">Model Style</label>
-              <select value={customType} onChange={(e) => setCustomType(e.target.value)}>
-                <option value="appliance">Solid Appliance Box</option>
-                <option value="lamp">Table Lamp</option>
-                <option value="stool">Chair / Stool</option>
-                <option value="table">Dining Table</option>
-                <option value="plant">Potted Plant</option>
-                <option value="billboard">Flat Decor Billboard</option>
-              </select>
             </div>
 
             <div className="divider" />
@@ -799,21 +936,24 @@ export default function Sidebar() {
                 <span className="dim-label" style={{ textAlign: 'center', display: 'block' }}>W</span>
                 <input
                   type="number" step={0.05} min={0.1} max={4}
-                  value={customWidth} onChange={(e) => setCustomWidth(parseFloat(e.target.value))}
+                  value={customWidth} onChange={(e) => setCustomWidth(parseFloat(e.target.value) || 0.1)}
+                  style={{ fontSize: '0.72rem', padding: '4px 6px', border: '1px solid var(--border-subtle)' }}
                 />
               </div>
               <div className="dim-field">
                 <span className="dim-label" style={{ textAlign: 'center', display: 'block' }}>D</span>
                 <input
                   type="number" step={0.05} min={0.1} max={3}
-                  value={customDepth} onChange={(e) => setCustomDepth(parseFloat(e.target.value))}
+                  value={customDepth} onChange={(e) => setCustomDepth(parseFloat(e.target.value) || 0.1)}
+                  style={{ fontSize: '0.72rem', padding: '4px 6px', border: '1px solid var(--border-subtle)' }}
                 />
               </div>
               <div className="dim-field">
                 <span className="dim-label" style={{ textAlign: 'center', display: 'block' }}>H</span>
                 <input
                   type="number" step={0.05} min={0.1} max={4}
-                  value={customHeight} onChange={(e) => setCustomHeight(parseFloat(e.target.value))}
+                  value={customHeight} onChange={(e) => setCustomHeight(parseFloat(e.target.value) || 0.1)}
+                  style={{ fontSize: '0.72rem', padding: '4px 6px', border: '1px solid var(--border-subtle)' }}
                 />
               </div>
             </div>
@@ -824,7 +964,7 @@ export default function Sidebar() {
               onClick={handleGenerateCustom}
               disabled={isGenerating}
             >
-              {isGenerating ? '⌛ AI Rendering...' : '🪄 Generate 3D Model'}
+              {isGenerating ? '⌛ Processing...' : sourceType === 'glb' ? '📦 Add 3D glTF Model' : '🪄 Generate 3D Model'}
             </button>
 
             <div className="divider" style={{ margin: '18px 0 14px 0' }} />
