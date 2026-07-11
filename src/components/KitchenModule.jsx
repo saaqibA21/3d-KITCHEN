@@ -50,7 +50,7 @@ function useCabinetMat(app, mod) {
       m.diffuse = new Color(1, 1, 1);
     } else {
       m.diffuseMap = null;
-      m.diffuseMapTiling = undefined;
+      m.diffuseMapTiling = new Vec2(1, 1);
     }
 
     const props = MAT_PROPS[material] || MAT_PROPS.matte;
@@ -102,6 +102,7 @@ function useCountertopMat(app, mod) {
     } else {
       m.diffuseMap = null;
       m.diffuse = new Color(0.4, 0.4, 0.4);
+      m.diffuseMapTiling = new Vec2(1, 1);
     }
 
     const props = CT_PROPS[countertop] || CT_PROPS.granite;
