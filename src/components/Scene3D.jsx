@@ -334,7 +334,7 @@ export default function Scene3D({ isWalkthrough, onGlReady }) {
     <Application
       fillMode="fill-window"
       resolutionMode="auto"
-      deviceTypes={['webgpu', 'webgl2']}
+      deviceTypes={['webgl2']}
       graphicsDeviceOptions={{ preserveDrawingBuffer: true, antialias: true }}
       style={{ width: '100%', height: '100%', background: '#0a0b0e' }}
       onClick={() => setSelectedId(null)}
