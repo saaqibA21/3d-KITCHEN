@@ -986,7 +986,7 @@ function SculptModel3D({ w, h, d, customMat, mod, isSelected, app }) {
         entity.removeComponent('render');
       }
     };
-  }, [app, mod.depthMap, w, h, mod.displacement, mod.resolution, customMat, mod.wireframe]);
+  }, [app, mod.depthMap, w, h, mod.displacement, mod.resolution, customMat, customMat.diffuseMap, mod.wireframe]);
 
   return (
     <Entity ref={entityRef} name="custom-sculpt-relief">
