@@ -847,6 +847,19 @@ function createDisplacedPlaneMesh(device, depthMap, w, h, displacement, resoluti
   const segsY = Math.round(resolution / aspect);
   const channels = data ? Math.max(1, Math.round(data.length / (dw * dh))) : 1;
 
+  console.log("createDisplacedPlaneMesh debug:", {
+    dataLength: data ? data.length : 0,
+    dw,
+    dh,
+    channels,
+    w,
+    h,
+    displacement,
+    resolution,
+    dataType: data ? data.constructor.name : 'null',
+    sampleData: data ? data.slice(0, 10) : []
+  });
+
   const positions = [];
   const normals = [];
   const uvs = [];
