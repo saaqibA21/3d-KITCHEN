@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import useKitchenStore from '../store/kitchenStore';
+import { DepthProcessor } from '../services/DepthProcessor';
 import './Sidebar.css';
 
 const IconGrid = () => (
@@ -227,6 +228,13 @@ export default function Sidebar() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isScanningLayout, setIsScanningLayout] = useState(false);
   const [scanStepText, setScanStepText] = useState('');
+
+  // 3D Depth-Sculpting Relief states
+  const [customDisplacement, setCustomDisplacement] = useState(0.4);
+  const [customResolution, setCustomResolution] = useState(64);
+  const [customWireframe, setCustomWireframe] = useState(false);
+  const [depthMode, setDepthMode] = useState('luminance'); // 'luminance' | 'ai'
+  const [depthProgress, setDepthProgress] = useState(0);
 
   const handleAutoBuildKitchen = () => {
     if (!blueprintUrl) {
@@ -538,6 +546,70 @@ export default function Sidebar() {
       return;
     }
     setIsGenerating(true);
+
+    if (customType === 'sculpt') {
+      setDepthProgress(0);
+      const processDepth = async () => {
+        try {
+          let depthResult = null;
+          if (depthMode === 'ai') {
+            depthResult = await DepthProcessor.estimateDepth(customImage, (p) => setDepthProgress(p));
+          } else {
+            depthResult = await DepthProcessor.estimateLuminanceDepth(customImage);
+          }
+
+          const newObj = {
+            id: `ai_${Date.now()}`,
+            label: customName || '3D Sculpted Decor',
+            width: customWidth,
+            height: customHeight,
+            depth: customDepth,
+            objectType: 'sculpt',
+            imageUrl: customImage,
+            depthMap: {
+              data: Array.from(depthResult.data),
+              width: depthResult.width,
+              height: depthResult.height
+            },
+            displacement: customDisplacement,
+            resolution: customResolution,
+            wireframe: customWireframe
+          };
+          addCustomAiObject(newObj);
+          setIsGenerating(false);
+          alert(`✨ 3D Relief Sculpt Generated:\nSuccessfully sculpted "${customName || '3D Sculpted Decor'}" into a 3D model!`);
+        } catch (err) {
+          console.error(err);
+          alert("Depth map generation failed. Falling back to Luminance heightmap.");
+          try {
+            const depthResult = await DepthProcessor.estimateLuminanceDepth(customImage);
+            const newObj = {
+              id: `ai_${Date.now()}`,
+              label: customName || '3D Sculpted Decor',
+              width: customWidth,
+              height: customHeight,
+              depth: customDepth,
+              objectType: 'sculpt',
+              imageUrl: customImage,
+              depthMap: {
+                data: Array.from(depthResult.data),
+                width: depthResult.width,
+                height: depthResult.height
+              },
+              displacement: customDisplacement,
+              resolution: customResolution,
+              wireframe: customWireframe
+            };
+            addCustomAiObject(newObj);
+          } catch (e) {
+            console.error(e);
+          }
+          setIsGenerating(false);
+        }
+      };
+      processDepth();
+      return;
+    }
 
     const img = new Image();
     img.src = customImage;
@@ -1139,6 +1211,7 @@ export default function Sidebar() {
                   <label className="label">Model Style</label>
                   <select value={customType} onChange={(e) => setCustomType(e.target.value)}>
                     <option value="appliance">Solid Appliance Box</option>
+                    <option value="sculpt">3D Depth-Sculpted Relief</option>
                     <option value="lamp">Table Lamp</option>
                     <option value="stool">Chair / Stool</option>
                     <option value="table">Dining Table</option>
@@ -1146,6 +1219,59 @@ export default function Sidebar() {
                     <option value="billboard">Flat Decor Billboard</option>
                   </select>
                 </div>
+
+                {customType === 'sculpt' && (
+                  <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 10, background: 'rgba(255, 255, 255, 0.02)', padding: 10, borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)', marginBottom: 12 }}>
+                    <div className="form-row" style={{ margin: 0 }}>
+                      <label className="label" style={{ fontSize: '0.68rem' }}>Depth Mode</label>
+                      <select value={depthMode} onChange={(e) => setDepthMode(e.target.value)} style={{ fontSize: '0.7rem', padding: '4px 6px' }}>
+                        <option value="luminance">Luminance Heightmap (Instant)</option>
+                        <option value="ai">AI Depth-Anything V2 (Neural)</option>
+                      </select>
+                    </div>
+
+                    <div className="form-row" style={{ margin: 0 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <label className="label" style={{ fontSize: '0.68rem', margin: 0 }}>Extrusion Depth</label>
+                        <span style={{ fontSize: '0.68rem', color: 'var(--accent-primary)', fontWeight: 600 }}>{customDisplacement.toFixed(2)}m</span>
+                      </div>
+                      <input 
+                        type="range" min="0.05" max="1.5" step="0.05" 
+                        value={customDisplacement} 
+                        onChange={(e) => setCustomDisplacement(parseFloat(e.target.value))} 
+                        style={{ height: 4, padding: 0 }}
+                      />
+                    </div>
+
+                    <div className="form-row" style={{ margin: 0 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <label className="label" style={{ fontSize: '0.68rem', margin: 0 }}>Mesh Resolution</label>
+                        <span style={{ fontSize: '0.68rem', color: 'var(--accent-primary)', fontWeight: 600 }}>{customResolution}px</span>
+                      </div>
+                      <input 
+                        type="range" min="32" max="128" step="16" 
+                        value={customResolution} 
+                        onChange={(e) => setCustomResolution(parseInt(e.target.value))} 
+                        style={{ height: 4, padding: 0 }}
+                      />
+                    </div>
+
+                    <button
+                      className={`btn-secondary ${customWireframe ? 'active' : ''}`}
+                      style={{ width: '100%', justifyContent: 'space-between', padding: '6px 10px', fontSize: '0.68rem' }}
+                      onClick={() => setCustomWireframe(!customWireframe)}
+                    >
+                      <span>🌐 Wireframe Mode</span>
+                      <div style={{ width: 10, height: 10, borderRadius: '50%', background: customWireframe ? '#f59e0b' : 'rgba(255,255,255,0.2)' }}></div>
+                    </button>
+
+                    {isGenerating && depthMode === 'ai' && (
+                      <div style={{ fontSize: '0.62rem', color: 'var(--accent-primary)', textAlign: 'center', marginTop: 4 }}>
+                        ⏳ Estimating neural depth: {Math.round(depthProgress)}%
+                      </div>
+                    )}
+                  </div>
+                )}
               </>
             )}
 
@@ -1242,7 +1368,11 @@ export default function Sidebar() {
                         depth: obj.depth,
                         customImageUrl: obj.imageUrl,
                         objectType: obj.objectType,
-                        silhouetteProfile: obj.silhouetteProfile
+                        silhouetteProfile: obj.silhouetteProfile,
+                        depthMap: obj.depthMap,
+                        displacement: obj.displacement,
+                        resolution: obj.resolution,
+                        wireframe: obj.wireframe
                       })}
                     >
                       ➕ Add to Layout

@@ -2,7 +2,7 @@ import React, { useRef, useMemo, useState, useEffect } from 'react';
 import { Entity } from '@playcanvas/react';
 import { Render } from '@playcanvas/react/components';
 import { useMaterial, useApp, useAppEvent } from '@playcanvas/react/hooks';
-import { Vec2, math, BLEND_NORMAL, Texture, PIXELFORMAT_R8_G8_B8_A8, Mesh, MeshInstance, StandardMaterial, Color } from 'playcanvas';
+import { Vec2, Vec3, math, BLEND_NORMAL, Texture, PIXELFORMAT_R8_G8_B8_A8, Mesh, MeshInstance, StandardMaterial, Color } from 'playcanvas';
 import useKitchenStore from '../store/kitchenStore';
 import { SinkModel, StoveModel, RefrigeratorModel, OvenModel, DishwasherModel } from './Appliances';
 import { getCabinetTexture, getCountertopTexture } from '../utils/textures';
@@ -840,6 +840,161 @@ function GlbModelRenderer({ url, mod, isSelected, app }) {
   );
 }
 
+function createDisplacedPlaneMesh(device, depthMap, w, h, displacement, resolution) {
+  const { data, width: dw, height: dh } = depthMap;
+  const aspect = w / h;
+  const segsX = resolution;
+  const segsY = Math.round(resolution / aspect);
+
+  const positions = [];
+  const normals = [];
+  const uvs = [];
+  const indices = [];
+
+  // Generate vertices
+  for (let y = 0; y <= segsY; y++) {
+    const v = y / segsY;
+    const posY = (0.5 - v) * h;
+    const py = Math.floor(v * (dh - 1));
+
+    for (let x = 0; x <= segsX; x++) {
+      const u = x / segsX;
+      const posX = (u - 0.5) * w;
+      const px = Math.floor(u * (dw - 1));
+
+      const index = py * dw + px;
+      // Get height from depth map (default to 0 if out of bounds)
+      const depthVal = data && data[index] !== undefined ? data[index] / 255.0 : 0.0;
+      const posZ = depthVal * displacement;
+
+      positions.push(posX, posY, posZ);
+      normals.push(0, 0, 1); // Face forward initially
+      uvs.push(u, 1 - v); // Image coordinates uv
+    }
+  }
+
+  // Generate indices (two triangles per cell)
+  for (let y = 0; y < segsY; y++) {
+    for (let x = 0; x < segsX; x++) {
+      const row1 = y * (segsX + 1);
+      const row2 = (y + 1) * (segsX + 1);
+
+      // Triangle 1
+      indices.push(row1 + x, row2 + x, row1 + x + 1);
+      // Triangle 2
+      indices.push(row1 + x + 1, row2 + x, row2 + x + 1);
+    }
+  }
+
+  // Compute smooth vertex normals
+  const tempV1 = new Vec3();
+  const tempV2 = new Vec3();
+  const tempNormal = new Vec3();
+
+  // Reset normals to 0
+  for (let i = 0; i < normals.length; i++) {
+    normals[i] = 0;
+  }
+
+  // Accumulate triangle normals
+  for (let i = 0; i < indices.length; i += 3) {
+    const idx0 = indices[i];
+    const idx1 = indices[i + 1];
+    const idx2 = indices[i + 2];
+
+    const p0 = new Vec3(positions[idx0 * 3], positions[idx0 * 3 + 1], positions[idx0 * 3 + 2]);
+    const p1 = new Vec3(positions[idx1 * 3], positions[idx1 * 3 + 1], positions[idx1 * 3 + 2]);
+    const p2 = new Vec3(positions[idx2 * 3], positions[idx2 * 3 + 1], positions[idx2 * 3 + 2]);
+
+    tempV1.sub2(p1, p0);
+    tempV2.sub2(p2, p0);
+    tempNormal.cross(tempV1, tempV2).normalize();
+
+    // Accumulate normals for the three vertices
+    normals[idx0 * 3] += tempNormal.x;
+    normals[idx0 * 3 + 1] += tempNormal.y;
+    normals[idx0 * 3 + 2] += tempNormal.z;
+
+    normals[idx1 * 3] += tempNormal.x;
+    normals[idx1 * 3 + 1] += tempNormal.y;
+    normals[idx1 * 3 + 2] += tempNormal.z;
+
+    normals[idx2 * 3] += tempNormal.x;
+    normals[idx2 * 3 + 1] += tempNormal.y;
+    normals[idx2 * 3 + 2] += tempNormal.z;
+  }
+
+  // Normalize final vertex normals
+  for (let i = 0; i < normals.length; i += 3) {
+    const n = new Vec3(normals[i], normals[i + 1], normals[i + 2]).normalize();
+    normals[i] = n.x;
+    normals[i + 1] = n.y;
+    normals[i + 2] = n.z;
+  }
+
+  const mesh = new Mesh(device);
+  mesh.setPositions(positions);
+  mesh.setNormals(normals);
+  mesh.setUvs(0, uvs);
+  mesh.setIndices(indices);
+  mesh.update(1); // 1 = pc.PRIMITIVE_TRIANGLES
+  return mesh;
+}
+
+function SculptModel3D({ w, h, d, customMat, mod, isSelected, app }) {
+  const entityRef = useRef();
+  const meshRef = useRef(null);
+
+  useEffect(() => {
+    if (!app || !entityRef.current || !mod.depthMap || !app.graphicsDevice) return;
+
+    const device = app.graphicsDevice;
+    const mesh = createDisplacedPlaneMesh(
+      device, 
+      mod.depthMap, 
+      w, 
+      h, 
+      mod.displacement || 0.4, 
+      mod.resolution || 64
+    );
+
+    meshRef.current = mesh;
+
+    // Clone custom material to avoid changing shared state wireframe setting
+    const mat = customMat.clone();
+    mat.wireframe = !!mod.wireframe;
+    mat.cull = 0; // CullNone (0) to render back faces
+    mat.update();
+
+    const meshInstance = new pc.MeshInstance(mesh, mat);
+    const entity = entityRef.current;
+    
+    if (!entity.render) {
+      entity.addComponent('render', {
+        type: 'asset',
+        castShadows: true,
+        receiveShadows: true
+      });
+    }
+    entity.render.meshInstances = [meshInstance];
+
+    return () => {
+      if (meshRef.current) {
+        meshRef.current.destroy();
+      }
+      if (entity.render) {
+        entity.removeComponent('render');
+      }
+    };
+  }, [app, mod.depthMap, w, h, mod.displacement, mod.resolution, customMat, mod.wireframe]);
+
+  return (
+    <Entity ref={entityRef} name="custom-sculpt-relief">
+      {isSelected && <SelectionBox width={w} height={h} depth={d} />}
+    </Entity>
+  );
+}
+
 function CustomAiObjectModel({ mod, isSelected, app }) {
   const { w, h, d } = { w: mod.width, h: mod.height, d: mod.depth };
 
@@ -853,6 +1008,9 @@ function CustomAiObjectModel({ mod, isSelected, app }) {
   const legMat  = useMaterial({ diffuse: hexToColor('#111111'), roughness: 0.3, metalness: 0.8 });
 
   if (!customMat) return null;
+  if (mod.objectType === 'sculpt') {
+    return <SculptModel3D w={w} h={h} d={d} customMat={customMat} mod={mod} isSelected={isSelected} app={app} />;
+  }
   if (mod.objectType === 'lamp') {
     return <LampModel w={w} h={h} d={d} customMat={customMat} profile={mod.silhouetteProfile} isSelected={isSelected} />;
   }
