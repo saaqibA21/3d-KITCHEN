@@ -966,7 +966,7 @@ function SculptModel3D({ w, h, d, customMat, mod, isSelected, app }) {
     mat.cull = 0; // CullNone (0) to render back faces
     mat.update();
 
-    const meshInstance = new pc.MeshInstance(mesh, mat);
+    const meshInstance = new MeshInstance(mesh, mat);
     const entity = entityRef.current;
     
     if (!entity.render) {
