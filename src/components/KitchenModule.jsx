@@ -845,6 +845,7 @@ function createDisplacedPlaneMesh(device, depthMap, w, h, displacement, resoluti
   const aspect = w / h;
   const segsX = resolution;
   const segsY = Math.round(resolution / aspect);
+  const channels = data ? Math.max(1, Math.round(data.length / (dw * dh))) : 1;
 
   const positions = [];
   const normals = [];
@@ -862,7 +863,7 @@ function createDisplacedPlaneMesh(device, depthMap, w, h, displacement, resoluti
       const posX = (u - 0.5) * w;
       const px = Math.floor(u * (dw - 1));
 
-      const index = py * dw + px;
+      const index = (py * dw + px) * channels;
       // Get height from depth map (default to 0 if out of bounds)
       const depthVal = data && data[index] !== undefined ? data[index] / 255.0 : 0.0;
       const posZ = depthVal * displacement;
