@@ -47,7 +47,7 @@ export default function PropertiesPanel() {
         <span className="props-header-icon">✦</span>
         <span style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.04em' }}>Properties</span>
         {mod && (
-          <span style={{ marginLeft: 'auto', fontSize: '0.60rem', color: 'var(--text-muted)', fontFamily: 'monospace', background: 'rgba(245,158,11,0.06)', padding: '2px 6px', borderRadius: 4, border: '1px solid rgba(245,158,11,0.12)' }}>
+          <span style={{ marginLeft: 'auto', fontSize: '0.60rem', color: 'var(--text-secondary)', fontFamily: 'monospace', background: 'var(--bg-secondary)', padding: '2px 6px', borderRadius: 4, border: '1px solid var(--border-subtle)' }}>
             {mod.type}
           </span>
         )}
@@ -117,7 +117,7 @@ export default function PropertiesPanel() {
                 <div className="form-row">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <label className="label" style={{ margin: 0 }}>Texture Scale</label>
-                    <span style={{ fontFamily: 'var(--font-display)', fontSize: '0.70rem', fontWeight: 700, color: 'var(--accent-teal)', textShadow: '0 0 8px rgba(6,182,212,0.4)', minWidth: 'auto' }}>
+                    <span style={{ fontFamily: 'var(--font-display)', fontSize: '0.70rem', fontWeight: 700, color: 'var(--accent-teal)', minWidth: 'auto' }}>
                       {Math.round((mod.textureScale || 1.0) * 100)}%
                     </span>
                   </div>
@@ -132,7 +132,7 @@ export default function PropertiesPanel() {
                 <div className="form-row">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <label className="label" style={{ margin: 0 }}>Tex Rotation</label>
-                    <span style={{ fontFamily: 'var(--font-display)', fontSize: '0.70rem', fontWeight: 700, color: 'var(--accent-violet)', textShadow: '0 0 8px rgba(139,92,246,0.4)', minWidth: 'auto' }}>
+                    <span style={{ fontFamily: 'var(--font-display)', fontSize: '0.70rem', fontWeight: 700, color: 'var(--accent-violet)', minWidth: 'auto' }}>
                       {mod.textureRotation || 0}°
                     </span>
                   </div>
@@ -160,12 +160,12 @@ export default function PropertiesPanel() {
                         background: ct.gradient,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         fontSize: '1.1rem', aspectRatio: '1', borderRadius: 'var(--radius-sm)',
-                        boxShadow: mod.countertop === ct.value ? 'inset 0 0 0 2px var(--accent-primary), 0 0 16px rgba(245,158,11,0.3)' : '0 2px 8px rgba(0,0,0,0.4)'
+                        boxShadow: mod.countertop === ct.value ? 'inset 0 0 0 2px var(--accent-primary)' : '0 1px 3px rgba(0,0,0,0.1)'
                       }}
                       title={ct.label}
                       onClick={() => updateModule(mod.id, { countertop: ct.value })}
                     >
-                      {mod.countertop === ct.value && <span style={{ filter: 'drop-shadow(0 0 4px rgba(245,158,11,0.8))' }}>{ct.icon}</span>}
+                      {mod.countertop === ct.value && <span>{ct.icon}</span>}
                     </button>
                   ))}
                 </div>
@@ -228,11 +228,11 @@ export default function PropertiesPanel() {
               </div>
             </div>
 
-            {/* Rotation */}
+             {/* Rotation */}
             <div className="props-group">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                 <label className="label" style={{ margin: 0 }}>Rotation</label>
-                <span style={{ fontFamily: 'var(--font-display)', fontSize: '0.72rem', fontWeight: 800, color: 'var(--accent-primary)', textShadow: '0 0 10px rgba(245,158,11,0.5)' }}>
+                <span style={{ fontFamily: 'var(--font-display)', fontSize: '0.72rem', fontWeight: 800, color: 'var(--accent-primary)' }}>
                   {mod.rotation}°
                 </span>
               </div>
@@ -275,7 +275,7 @@ export default function PropertiesPanel() {
           </div>
         ) : (
           <div className="empty-state">
-            <div className="empty-state-icon" style={{ fontSize: '2.4rem', filter: 'drop-shadow(0 0 12px rgba(245,158,11,0.3))' }}>✦</div>
+            <div className="empty-state-icon" style={{ fontSize: '2.4rem' }}>✦</div>
             <p style={{ color: 'var(--text-muted)', lineHeight: 1.7 }}>Select any item in the <strong style={{ color: 'var(--accent-primary)' }}>2D plan</strong> or <strong style={{ color: 'var(--accent-teal)' }}>3D view</strong> to edit properties</p>
           </div>
         )}
@@ -286,7 +286,7 @@ export default function PropertiesPanel() {
         <div className="props-group">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
             <label className="label" style={{ margin: 0 }}>Project</label>
-            <span style={{ fontFamily: 'var(--font-display)', fontSize: '0.68rem', fontWeight: 700, color: 'var(--accent-primary)', background: 'var(--accent-glow)', padding: '2px 8px', borderRadius: 100, border: '1px solid var(--border-accent)', textShadow: '0 0 8px rgba(245,158,11,0.4)' }}>
+            <span style={{ fontFamily: 'var(--font-display)', fontSize: '0.68rem', fontWeight: 700, color: 'var(--accent-primary)', background: 'var(--bg-secondary)', padding: '2px 8px', borderRadius: 100, border: '1px solid var(--border-subtle)' }}>
               {modules.length} items
             </span>
           </div>
