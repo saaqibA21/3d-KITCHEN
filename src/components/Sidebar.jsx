@@ -236,6 +236,65 @@ export default function Sidebar() {
   const [depthMode, setDepthMode] = useState('luminance'); // 'luminance' | 'ai'
   const [depthProgress, setDepthProgress] = useState(0);
 
+  // Background removal states
+  const [removeBg, setRemoveBg] = useState(true);
+  const [bgThreshold, setBgThreshold] = useState(40);
+  const [rawUploadedImage, setRawUploadedImage] = useState(null);
+
+  useEffect(() => {
+    if (!rawUploadedImage) {
+      setCustomImage(null);
+      return;
+    }
+    if (!removeBg) {
+      setCustomImage(rawUploadedImage);
+      return;
+    }
+
+    const img = new Image();
+    img.src = rawUploadedImage;
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+
+      const imgData = ctx.getImageData(0, 0, img.width, img.height);
+      const pixels = imgData.data;
+
+      // Sample background color from 4 corners (top-left, top-right, bottom-left, bottom-right)
+      const corners = [
+        [0, 0],
+        [img.width - 1, 0],
+        [0, img.height - 1],
+        [img.width - 1, img.height - 1]
+      ];
+      let bgR = 0, bgG = 0, bgB = 0;
+      corners.forEach(([cx, cy]) => {
+        const idx = (cy * img.width + cx) * 4;
+        bgR += pixels[idx];
+        bgG += pixels[idx + 1];
+        bgB += pixels[idx + 2];
+      });
+      bgR /= 4; bgG /= 4; bgB /= 4;
+
+      // Make matching background pixels transparent
+      for (let i = 0; i < pixels.length; i += 4) {
+        const r = pixels[i];
+        const g = pixels[i + 1];
+        const b = pixels[i + 2];
+        const diff = Math.sqrt((r - bgR) ** 2 + (g - bgG) ** 2 + (b - bgB) ** 2);
+        if (diff < bgThreshold) {
+          pixels[i + 3] = 0; // Alpha = 0
+        }
+      }
+
+      ctx.putImageData(imgData, 0, 0);
+      setCustomImage(canvas.toDataURL('image/png'));
+    };
+  }, [rawUploadedImage, removeBg, bgThreshold]);
+
   const handleAutoBuildKitchen = () => {
     if (!blueprintUrl) {
       alert("Please upload a blueprint layout first!");
@@ -550,6 +609,29 @@ export default function Sidebar() {
     if (customType === 'sculpt') {
       setDepthProgress(0);
       const processDepth = async () => {
+        const applyDepthMask = async (res) => {
+          if (!removeBg) return;
+          try {
+            const img = new Image();
+            img.src = customImage;
+            await new Promise(r => img.onload = r);
+            const canvas = document.createElement('canvas');
+            canvas.width = res.width;
+            canvas.height = res.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, res.width, res.height);
+            const imgData = ctx.getImageData(0, 0, res.width, res.height);
+            const pixels = imgData.data;
+            for (let i = 0; i < pixels.length; i += 4) {
+              if (pixels[i + 3] < 50) {
+                res.data[i / 4] = 0; // Force transparent pixels depth to 0!
+              }
+            }
+          } catch (e) {
+            console.warn("applyDepthMask failed:", e);
+          }
+        };
+
         try {
           let depthResult = null;
           if (depthMode === 'ai') {
@@ -557,6 +639,8 @@ export default function Sidebar() {
           } else {
             depthResult = await DepthProcessor.estimateLuminanceDepth(customImage);
           }
+
+          await applyDepthMask(depthResult);
 
           const newObj = {
             id: `ai_${Date.now()}`,
@@ -583,6 +667,7 @@ export default function Sidebar() {
           alert("Depth map generation failed. Falling back to Luminance heightmap.");
           try {
             const depthResult = await DepthProcessor.estimateLuminanceDepth(customImage);
+            await applyDepthMask(depthResult);
             const newObj = {
               id: `ai_${Date.now()}`,
               label: customName || '3D Sculpted Decor',
@@ -1197,7 +1282,7 @@ export default function Sidebar() {
                           const file = e.target.files[0];
                           if (file) {
                             const r = new FileReader();
-                            r.onload = (ev) => setCustomImage(ev.target.result);
+                            r.onload = (ev) => setRawUploadedImage(ev.target.result);
                             r.readAsDataURL(file);
                           }
                         }}
@@ -1206,6 +1291,36 @@ export default function Sidebar() {
                     </div>
                   </div>
                 </div>
+
+                {rawUploadedImage && (
+                  <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 10, background: 'rgba(255, 255, 255, 0.02)', padding: 10, borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)', marginBottom: 12 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span className="label" style={{ fontSize: '0.68rem', margin: 0 }}>Remove Background</span>
+                      <button
+                        className={`toggle-btn ${removeBg ? 'active' : ''}`}
+                        onClick={() => setRemoveBg(!removeBg)}
+                        style={{ padding: '2px 8px', fontSize: '0.62rem', height: 22 }}
+                      >
+                        {removeBg ? 'ON' : 'OFF'}
+                      </button>
+                    </div>
+
+                    {removeBg && (
+                      <div className="form-row" style={{ margin: 0 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <label className="label" style={{ fontSize: '0.68rem', margin: 0 }}>Cutout Tolerance</label>
+                          <span style={{ fontSize: '0.68rem', color: 'var(--accent-primary)', fontWeight: 600 }}>{bgThreshold}</span>
+                        </div>
+                        <input 
+                          type="range" min="10" max="100" step="5" 
+                          value={bgThreshold} 
+                          onChange={(e) => setBgThreshold(parseInt(e.target.value))} 
+                          style={{ height: 4, padding: 0 }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 <div className="form-row">
                   <label className="label">Model Style</label>

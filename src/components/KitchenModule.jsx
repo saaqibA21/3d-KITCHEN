@@ -504,6 +504,10 @@ function useCustomAiMaterial(app, imageUrl) {
         tex.upload();
         const m = matRef.current;
         m.diffuseMap = tex;
+        m.opacityMap = tex;
+        m.opacityMapChannel = 'a';
+        m.blendType = BLEND_NORMAL;
+        m.alphaTest = 0.5;
         m.diffuse = new Color(1, 1, 1);
         m.update();
         forceUpdate(n => n + 1); // trigger a re-render so Render components pick up the new mat
