@@ -119,18 +119,18 @@ export default function FloorPlan2D() {
     const roomD = roomConfig.depth * SCALE;
 
     // Room shadow
-    ctx.shadowColor = 'rgba(60, 98, 85, 0.06)';
+    ctx.shadowColor = 'rgba(43, 39, 36, 0.04)';
     ctx.shadowBlur = 30;
-    ctx.fillStyle = '#eae3da';
+    ctx.fillStyle = '#eae1d6';
     ctx.fillRect(origin.x, origin.y, roomW, roomD);
     ctx.shadowBlur = 0;
 
     // Room floor
-    ctx.fillStyle = '#111419';
+    ctx.fillStyle = '#eae1d6';
     ctx.fillRect(origin.x, origin.y, roomW, roomD);
 
     // Floor grid lines
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+    ctx.strokeStyle = 'rgba(43, 39, 36, 0.04)';
     ctx.lineWidth = 1;
     for (let x = origin.x; x <= origin.x + roomW; x += GRID_SIZE) {
       ctx.beginPath(); ctx.moveTo(x, origin.y); ctx.lineTo(x, origin.y + roomD); ctx.stroke();
@@ -139,15 +139,15 @@ export default function FloorPlan2D() {
       ctx.beginPath(); ctx.moveTo(origin.x, y); ctx.lineTo(origin.x + roomW, y); ctx.stroke();
     }
 
-    // Room walls (sleek blue-teal blueprint style)
-    ctx.strokeStyle = '#06b6d4';
+    // Room walls (Traditional ink block style)
+    ctx.strokeStyle = '#2b2724';
     ctx.lineWidth = 4;
     ctx.strokeRect(origin.x, origin.y, roomW, roomD);
 
     // Exterior Dimension Lines & ticks (Top and Left)
     ctx.save();
-    ctx.strokeStyle = '#8b949e';
-    ctx.fillStyle = '#8b949e';
+    ctx.strokeStyle = '#8f8377';
+    ctx.fillStyle = '#8f8377';
     ctx.lineWidth = 1;
     ctx.font = '10px Inter, sans-serif';
     ctx.textAlign = 'center';
@@ -178,18 +178,18 @@ export default function FloorPlan2D() {
     drawHash(origin.x + roomW, topY);
 
     // Dimension text background + text
-    ctx.fillStyle = '#0a0c0f';
+    ctx.fillStyle = '#f5ede3';
     const topText = `${roomConfig.width.toFixed(2)} m`;
     const topTextW = ctx.measureText(topText).width + 8;
     ctx.fillRect(origin.x + roomW / 2 - topTextW / 2, topY - 6, topTextW, 12);
-    ctx.fillStyle = '#f59e0b'; // Amber gold
+    ctx.fillStyle = '#c23a2b'; // Vermilion red
     ctx.fillText(topText, origin.x + roomW / 2, topY + 3);
 
     // 2. Left Wall Main Dimension Line
     const leftX = origin.x - 24;
     ctx.save();
-    ctx.strokeStyle = '#8b949e';
-    ctx.fillStyle = '#8b949e';
+    ctx.strokeStyle = '#8f8377';
+    ctx.fillStyle = '#8f8377';
     ctx.beginPath();
     ctx.moveTo(leftX, origin.y);
     ctx.lineTo(leftX, origin.y + roomD);
@@ -207,14 +207,14 @@ export default function FloorPlan2D() {
     drawHash(leftX, origin.y + roomD);
 
     // Left dimension text
-    ctx.fillStyle = '#0a0c0f';
+    ctx.fillStyle = '#f5ede3';
     const leftText = `${roomConfig.depth.toFixed(2)} m`;
     const leftTextW = ctx.measureText(leftText).width + 8;
     ctx.fillRect(leftX - 6, origin.y + roomD / 2 - 6, 12, 12);
     
     ctx.translate(leftX + 3, origin.y + roomD / 2);
     ctx.rotate(-Math.PI / 2);
-    ctx.fillStyle = '#f59e0b'; // Amber gold
+    ctx.fillStyle = '#c23a2b'; // Vermilion red
     ctx.fillText(leftText, 0, 0);
     ctx.restore();
 
@@ -225,8 +225,8 @@ export default function FloorPlan2D() {
 
     if (topModules.length > 0) {
       ctx.save();
-      ctx.strokeStyle = 'rgba(110, 122, 117, 0.4)';
-      ctx.fillStyle = '#6e7a75';
+      ctx.strokeStyle = 'var(--border-card)';
+      ctx.fillStyle = 'var(--text-secondary)';
       ctx.font = '8px Inter, sans-serif';
       const subY = origin.y - 12;
 
@@ -265,8 +265,8 @@ export default function FloorPlan2D() {
     // 4. Centered Room Label & Area (Dark glassmorphism badge)
     const area = roomConfig.width * roomConfig.depth;
     ctx.save();
-    ctx.fillStyle = 'rgba(13, 17, 23, 0.9)';
-    ctx.strokeStyle = 'rgba(245, 158, 11, 0.25)';
+    ctx.fillStyle = '#f5ede3';
+    ctx.strokeStyle = '#2b2724';
     ctx.lineWidth = 1;
     const badgeW = 165;
     const badgeH = 46;
