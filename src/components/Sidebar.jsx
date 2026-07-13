@@ -1022,6 +1022,12 @@ export default function Sidebar() {
                 <input type="color" value={roomConfig.wallColor}
                   onChange={(e) => setRoomConfig({ wallColor: e.target.value })} />
               </div>
+
+              <div className="form-row" style={{ marginTop: 8 }}>
+                <label className="label">Floor Color</label>
+                <input type="color" value={roomConfig.floorColor || '#eae1d6'}
+                  onChange={(e) => setRoomConfig({ floorColor: e.target.value })} />
+              </div>
             </div>
           </div>
         )}

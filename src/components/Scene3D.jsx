@@ -113,9 +113,19 @@ function LEDStrip({ position, width, intensity, color }) {
 
 // ─── Room Geometry ────────────────────────────────────────────────────────────
 function Room({ roomConfig, app }) {
-  const { width, depth, height, wallColor } = roomConfig;
+  const { width, depth, height, wallColor, floorColor } = roomConfig;
 
-  const floorTex = useMemo(() => makeFloorTileTexture(app, '#c8b89a', '#7a7068'), [app]);
+  const floorTex = useMemo(() => {
+    const tileColor = floorColor || '#eae1d6';
+    let groutColor = '#7a7068';
+    if (tileColor.startsWith('#') && tileColor.length === 7) {
+      const r = Math.max(0, parseInt(tileColor.slice(1, 3), 16) - 40);
+      const g = Math.max(0, parseInt(tileColor.slice(3, 5), 16) - 40);
+      const b = Math.max(0, parseInt(tileColor.slice(5, 7), 16) - 40);
+      groutColor = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+    }
+    return makeFloorTileTexture(app, tileColor, groutColor);
+  }, [app, floorColor]);
 
   const floorMat = useMaterial({
     diffuseMap: floorTex,

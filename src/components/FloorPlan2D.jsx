@@ -121,12 +121,12 @@ export default function FloorPlan2D() {
     // Room shadow
     ctx.shadowColor = 'rgba(43, 39, 36, 0.04)';
     ctx.shadowBlur = 30;
-    ctx.fillStyle = '#eae1d6';
+    ctx.fillStyle = roomConfig.floorColor || '#eae1d6';
     ctx.fillRect(origin.x, origin.y, roomW, roomD);
     ctx.shadowBlur = 0;
 
     // Room floor
-    ctx.fillStyle = '#eae1d6';
+    ctx.fillStyle = roomConfig.floorColor || '#eae1d6';
     ctx.fillRect(origin.x, origin.y, roomW, roomD);
 
     // Floor grid lines
