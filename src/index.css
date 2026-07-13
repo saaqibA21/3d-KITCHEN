@@ -1,32 +1,32 @@
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700;900&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300&display=swap');
 
 /* ═══════════════════════════════════════════════════════════
-   DARK LUXURY ATELIER — Design Token System
+   GUOFENG (国风) JADE & CINNABAR — Design Token System
    ═══════════════════════════════════════════════════════════ */
 :root {
-  /* ── Base Backgrounds ─────────────────────────────────── */
-  --bg-app:        #0a0c0f;
-  --bg-primary:    #0d1117;
-  --bg-secondary:  #111419;
-  --bg-elevated:   #161b22;
-  --bg-card:       rgba(255,255,255,0.03);
-  --bg-card-hover: rgba(255,255,255,0.06);
-  --bg-glass:      rgba(13, 17, 23, 0.85);
-  --bg-glass-light: rgba(22, 27, 34, 0.92);
+  /* ── Base Backgrounds (Polished Deep Jade-Black) ────────── */
+  --bg-app:        #090d0b;
+  --bg-primary:    #0e1411;
+  --bg-secondary:  #121b18;
+  --bg-elevated:   #17231e;
+  --bg-card:       rgba(46, 117, 89, 0.05);
+  --bg-card-hover: rgba(46, 117, 89, 0.10);
+  --bg-glass:      rgba(14, 20, 17, 0.85);
+  --bg-glass-light: rgba(23, 35, 30, 0.92);
 
-  /* ── Accent — Amber Gold ──────────────────────────────── */
-  --accent-primary:   #f59e0b;
-  --accent-secondary: #d97706;
-  --accent-tertiary:  #fbbf24;
-  --accent-glow:      rgba(245, 158, 11, 0.15);
-  --accent-glow-strong: rgba(245, 158, 11, 0.3);
+  /* ── Accent — Cinnabar Red (朱砂红) ───────────────────────── */
+  --accent-primary:   #df3f3f;
+  --accent-secondary: #b82e2e;
+  --accent-tertiary:  #e6b450; /* Imperial Sand Gold */
+  --accent-glow:      rgba(223, 63, 63, 0.15);
+  --accent-glow-strong: rgba(223, 63, 63, 0.3);
 
-  /* ── Accent — Electric Teal ───────────────────────────── */
-  --accent-teal:      #06b6d4;
-  --accent-teal-dim:  rgba(6, 182, 212, 0.12);
-  --accent-teal-glow: rgba(6, 182, 212, 0.25);
+  /* ── Accent — Soft Sage Jade (翡翠绿) ─────────────────────── */
+  --accent-teal:      #2e7559;
+  --accent-teal-dim:  rgba(46, 117, 89, 0.10);
+  --accent-teal-glow: rgba(46, 117, 89, 0.20);
 
-  /* ── Accent — Violet ──────────────────────────────────── */
+  /* ── Accent — Royal Violet ────────────────────────────── */
   --accent-violet:     #8b5cf6;
   --accent-violet-dim: rgba(139, 92, 246, 0.12);
 
@@ -37,19 +37,19 @@
   --status-green-dim: rgba(16, 185, 129, 0.12);
   --status-red-dim:   rgba(239, 68, 68, 0.10);
 
-  /* ── Text ─────────────────────────────────────────────── */
-  --text-primary:   #f0f6fc;
-  --text-secondary: #8b949e;
-  --text-muted:     #484f58;
-  --text-accent:    #f59e0b;
-  --text-teal:      #06b6d4;
+  /* ── Text (Warm Rice Paper & Sage) ─────────────────────── */
+  --text-primary:   #f4f6f5;
+  --text-secondary: #8aa195;
+  --text-muted:     #4a5c53;
+  --text-accent:    #df3f3f;
+  --text-teal:      #2e7559;
 
-  /* ── Borders ──────────────────────────────────────────── */
-  --border-subtle:  rgba(255,255,255,0.05);
-  --border-card:    rgba(255,255,255,0.10);
-  --border-accent:  rgba(245, 158, 11, 0.40);
-  --border-teal:    rgba(6, 182, 212, 0.35);
-  --border-glow:    rgba(245, 158, 11, 0.60);
+  /* ── Borders (Gold Leaf & Jade hints) ──────────────────── */
+  --border-subtle:  rgba(46, 117, 89, 0.08);
+  --border-card:    rgba(230, 180, 80, 0.15);
+  --border-accent:  rgba(223, 63, 63, 0.35);
+  --border-teal:    rgba(46, 117, 89, 0.30);
+  --border-glow:    rgba(230, 180, 80, 0.40);
 
   /* ── Layout ───────────────────────────────────────────── */
   --sidebar-width:   300px;
@@ -64,7 +64,7 @@
   --radius-xl: 24px;
   --radius-2xl: 32px;
 
-  /* ── Shadows ──────────────────────────────────────────── */
+  /* ── Shadows (Imperial Gold & Jade Glows) ─────────────── */
   --shadow-sm:     0 2px 8px rgba(0,0,0,0.4);
   --shadow-md:     0 8px 24px rgba(0,0,0,0.5);
   --shadow-lg:     0 16px 48px rgba(0,0,0,0.6);
@@ -113,11 +113,11 @@ body {
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: rgba(245, 158, 11, 0.15);
+  background: rgba(230, 180, 80, 0.20);
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(245, 158, 11, 0.35);
+  background: rgba(230, 180, 80, 0.45);
 }
 
 /* ─── Typography ─────────────────────────────────────────────── */

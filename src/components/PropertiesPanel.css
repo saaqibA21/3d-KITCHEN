@@ -1,12 +1,12 @@
 /* ══════════════════════════════════════════════════
-   PROPERTIES PANEL — Dark Luxury Atelier
+   PROPERTIES PANEL — Guofeng Jade & Cinnabar Theme
    ══════════════════════════════════════════════════ */
 
 .props-panel {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: rgba(13, 17, 23, 0.97);
+  background: rgba(14, 20, 17, 0.98);
   backdrop-filter: blur(40px) saturate(180%);
   -webkit-backdrop-filter: blur(40px) saturate(180%);
   border-left: 1px solid var(--border-subtle);
@@ -23,9 +23,9 @@
   height: 100%;
   background: linear-gradient(180deg,
     transparent 0%,
-    rgba(6, 182, 212, 0.5) 20%,
-    rgba(245, 158, 11, 0.4) 50%,
-    rgba(139, 92, 246, 0.4) 80%,
+    rgba(46, 117, 89, 0.5) 20%,
+    rgba(230, 180, 80, 0.4) 50%,
+    rgba(223, 63, 63, 0.4) 80%,
     transparent 100%
   );
   pointer-events: none;
@@ -44,12 +44,12 @@
   letter-spacing: 0.04em;
   color: var(--text-secondary);
   flex-shrink: 0;
-  background: linear-gradient(180deg, rgba(6,182,212,0.04), transparent);
+  background: linear-gradient(180deg, rgba(230,180,80,0.03), transparent);
 }
 
 .props-header-icon {
   font-size: 1rem;
-  filter: drop-shadow(0 0 6px rgba(6,182,212,0.4));
+  filter: drop-shadow(0 0 6px rgba(230,180,80,0.4));
 }
 
 /* ── Scroll Container ─────────────────────────── */

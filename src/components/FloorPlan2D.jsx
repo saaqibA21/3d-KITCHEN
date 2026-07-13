@@ -5,18 +5,18 @@ const GRID_SIZE = 20; // pixels per 10cm
 const SCALE = 50; // pixels per meter
 
 const TYPE_COLORS = {
-  base_cabinet: 'rgba(245, 158, 11, 0.15)', // Amber
-  wall_cabinet: 'rgba(6, 182, 212, 0.15)', // Teal
-  tall_cabinet: 'rgba(139, 92, 246, 0.15)', // Violet
-  corner_base: 'rgba(245, 158, 11, 0.15)',
-  island: 'rgba(245, 158, 11, 0.25)',
-  drawer_unit: 'rgba(245, 158, 11, 0.15)',
-  sink: 'rgba(6, 182, 212, 0.25)',
-  stove: 'rgba(239, 68, 68, 0.15)',
-  refrigerator: 'rgba(156, 163, 175, 0.15)',
-  oven: 'rgba(239, 68, 68, 0.20)',
-  dishwasher: 'rgba(156, 163, 175, 0.20)',
-  custom_ai_object: 'rgba(16, 185, 129, 0.15)',
+  base_cabinet: 'rgba(230, 180, 80, 0.15)', // Sand Gold
+  wall_cabinet: 'rgba(46, 117, 89, 0.15)', // Jade Green
+  tall_cabinet: 'rgba(223, 63, 63, 0.15)', // Cinnabar Red
+  corner_base: 'rgba(230, 180, 80, 0.15)',
+  island: 'rgba(230, 180, 80, 0.25)',
+  drawer_unit: 'rgba(230, 180, 80, 0.15)',
+  sink: 'rgba(46, 117, 89, 0.25)',
+  stove: 'rgba(223, 63, 63, 0.20)',
+  refrigerator: 'rgba(138, 161, 149, 0.15)', // Sage
+  oven: 'rgba(223, 63, 63, 0.20)',
+  dishwasher: 'rgba(138, 161, 149, 0.20)',
+  custom_ai_object: 'rgba(223, 63, 63, 0.25)', // Red accent
 };
 
 export default function FloorPlan2D() {
@@ -60,11 +60,11 @@ export default function FloorPlan2D() {
     ctx.clearRect(0, 0, cw, ch);
 
     // Background
-    ctx.fillStyle = '#0a0c0f';
+    ctx.fillStyle = '#090d0b';
     ctx.fillRect(0, 0, cw, ch);
 
     // Grid
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.02)';
+    ctx.strokeStyle = 'rgba(46, 117, 89, 0.03)';
     ctx.lineWidth = 1;
     for (let x = 0; x < cw; x += GRID_SIZE) {
       ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, ch); ctx.stroke();
@@ -277,11 +277,11 @@ export default function FloorPlan2D() {
     ctx.fill();
     ctx.stroke();
 
-    ctx.fillStyle = '#f59e0b'; // Amber gold
+    ctx.fillStyle = '#e6b450'; // Sand gold
     ctx.font = 'bold 11px Inter, sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText('Modular Kitchen Room', origin.x + roomW / 2, origin.y + roomD / 2 - 4);
-    ctx.fillStyle = '#8b949e';
+    ctx.fillStyle = '#8aa195';
     ctx.font = '10px Inter, sans-serif';
     ctx.fillText(`${area.toFixed(2)} m² (${roomConfig.width}m × ${roomConfig.depth}m)`, origin.x + roomW / 2, origin.y + roomD / 2 + 12);
     ctx.restore();
@@ -297,19 +297,19 @@ export default function FloorPlan2D() {
       ctx.fillStyle = rm.color || 'rgba(255, 255, 255, 0.04)';
       ctx.fillRect(rx, ry, rw, rh);
 
-      ctx.strokeStyle = selectedId === rm.id ? '#f59e0b' : 'rgba(255, 255, 255, 0.15)';
+      ctx.strokeStyle = selectedId === rm.id ? '#e6b450' : 'rgba(255, 255, 255, 0.12)';
       ctx.lineWidth = selectedId === rm.id ? 2 : 1;
       ctx.setLineDash([4, 4]);
       ctx.strokeRect(rx, ry, rw, rh);
       ctx.setLineDash([]);
 
-      ctx.fillStyle = '#f59e0b';
+      ctx.fillStyle = '#e6b450';
       ctx.font = 'bold 10px Inter, sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(rm.label, rx + rw / 2, ry + rh / 2 - 5);
       
-      ctx.fillStyle = '#8b949e';
+      ctx.fillStyle = '#8aa195';
       ctx.font = '8px Inter, sans-serif';
       const rmArea = rm.width * rm.depth;
       ctx.fillText(`${rmArea.toFixed(1)} m²`, rx + rw / 2, ry + rh / 2 + 6);
@@ -333,7 +333,7 @@ export default function FloorPlan2D() {
 
       // ── CUSTOM SYMBOLS OVERRIDES ──
       if (mod.type === 'door') {
-        ctx.strokeStyle = '#f59e0b'; // Amber gold for door arc
+        ctx.strokeStyle = '#e6b450'; // Sand gold for door arc
         ctx.lineWidth = 1.5;
         ctx.beginPath();
         ctx.arc(0, mh, mw, 1.5 * Math.PI, 2 * Math.PI);
@@ -350,9 +350,9 @@ export default function FloorPlan2D() {
       }
 
       if (mod.type === 'window') {
-        ctx.fillStyle = 'rgba(6, 182, 212, 0.12)'; // Cyan tint
+        ctx.fillStyle = 'rgba(46, 117, 89, 0.12)'; // Jade green tint
         ctx.fillRect(0, 0, mw, mh);
-        ctx.strokeStyle = '#06b6d4'; // Electric cyan
+        ctx.strokeStyle = '#2e7559'; // Sage jade
         ctx.lineWidth = 1.5;
         ctx.strokeRect(0, 0, mw, mh);
         
@@ -514,7 +514,7 @@ export default function FloorPlan2D() {
       }
 
       if (isSelected || isHovered) {
-        ctx.shadowColor = isSelected ? 'rgba(245, 158, 11, 0.4)' : 'rgba(6, 182, 212, 0.2)';
+        ctx.shadowColor = isSelected ? 'rgba(230, 180, 80, 0.4)' : 'rgba(46, 117, 89, 0.2)';
         ctx.shadowBlur = 12;
       }
 
@@ -522,20 +522,20 @@ export default function FloorPlan2D() {
       ctx.fillStyle = baseColor;
       ctx.fillRect(0, 0, mw, mh);
 
-      ctx.strokeStyle = isSelected ? '#f59e0b' : isHovered ? 'rgba(6, 182, 212, 0.6)' : 'rgba(255, 255, 255, 0.15)';
+      ctx.strokeStyle = isSelected ? '#e6b450' : isHovered ? 'rgba(46, 117, 89, 0.6)' : 'rgba(255, 255, 255, 0.12)';
       ctx.lineWidth = isSelected ? 2 : 1;
       ctx.strokeRect(0, 0, mw, mh);
 
       ctx.shadowBlur = 0;
 
-      ctx.fillStyle = '#f0f6fc';
+      ctx.fillStyle = '#f4f6f5';
       ctx.font = `${isSelected ? 700 : 500} 9px Inter, sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       const label = mod.label.length > 10 ? mod.label.substring(0, 8) + '…' : mod.label;
       ctx.fillText(label, mw / 2, mh / 2);
 
-      ctx.fillStyle = 'rgba(240, 246, 252, 0.6)';
+      ctx.fillStyle = 'rgba(244, 246, 245, 0.6)';
       ctx.font = '7px Inter, sans-serif';
       ctx.fillText(`${Math.round(mod.width * 100)}×${Math.round(mod.depth * 100)}cm`, mw / 2, mh / 2 + 10);
 
@@ -543,13 +543,13 @@ export default function FloorPlan2D() {
     });
 
     // Compass
-    ctx.fillStyle = '#f59e0b';
+    ctx.fillStyle = '#df3f3f'; // Cinnabar Red
     ctx.font = 'bold 12px Inter';
     ctx.textAlign = 'center';
     ctx.fillText('N', origin.x + roomW / 2, origin.y - 24);
 
     // Module count
-    ctx.fillStyle = '#8b949e';
+    ctx.fillStyle = '#8aa195';
     ctx.font = '10px Inter';
     ctx.textAlign = 'left';
     ctx.fillText(`${modules.length} module${modules.length !== 1 ? 's' : ''}`, 12, ch - 12);
