@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════
-   TOOLBAR — Guofeng Jade & Cinnabar Theme
+   TOOLBAR — Solid Sleek Light Theme (No Glow)
    ══════════════════════════════════════════════════ */
 
 .toolbar {
@@ -8,28 +8,16 @@
   gap: 8px;
   padding: 0 20px;
   height: var(--toolbar-height);
-  background: rgba(14, 20, 17, 0.97);
-  backdrop-filter: blur(40px) saturate(200%);
-  -webkit-backdrop-filter: blur(40px) saturate(200%);
+  background: var(--bg-primary);
   border-bottom: 1px solid var(--border-subtle);
   z-index: 200;
   position: relative;
-  box-shadow: 0 1px 0 rgba(230, 180, 80, 0.08), 0 4px 24px rgba(0,0,0,0.5);
+  box-shadow: 0 1px 0 var(--border-subtle);
 }
 
-/* Ambient top glow line */
+/* Ambient top glow line (disabled in light theme) */
 .toolbar::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 1px;
-  background: linear-gradient(90deg,
-    transparent 0%,
-    rgba(230, 180, 80, 0.6) 20%,
-    rgba(223, 63, 63, 0.4) 50%,
-    rgba(46, 117, 89, 0.4) 80%,
-    transparent 100%
-  );
+  display: none;
 }
 
 /* ── Brand ────────────────────────────────── */
@@ -48,17 +36,15 @@
   justify-content: center;
   width: 34px;
   height: 34px;
-  background: linear-gradient(135deg, rgba(223,63,63,0.15), rgba(230,180,80,0.08));
-  border: 1px solid rgba(223,63,63,0.3);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
   color: var(--accent-primary);
-  filter: drop-shadow(0 0 8px rgba(223,63,63,0.4));
   transition: var(--transition-slow);
 }
 
 .toolbar-brand:hover .toolbar-brand-icon {
   transform: rotate(180deg) scale(1.1);
-  filter: drop-shadow(0 0 14px rgba(223,63,63,0.7));
   border-color: var(--border-accent);
 }
 
@@ -73,26 +59,15 @@
   font-size: 0.96rem;
   font-weight: 800;
   letter-spacing: -0.03em;
-  background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-tertiary) 50%, var(--accent-teal) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  background-size: 200% auto;
-  animation: gradient-shift 4s ease infinite;
-}
-
-@keyframes gradient-shift {
-  0%   { background-position: 0% center; }
-  50%  { background-position: 100% center; }
-  100% { background-position: 0% center; }
+  color: var(--text-primary);
 }
 
 .toolbar-brand-tag {
   font-family: var(--font-display);
   font-size: 0.50rem;
   font-weight: 800;
-  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-  color: #0d1117;
+  background: var(--accent-primary);
+  color: var(--bg-primary);
   padding: 1px 5px;
   border-radius: 3px;
   letter-spacing: 0.08em;
@@ -104,7 +79,7 @@
   display: flex;
   align-items: center;
   gap: 2px;
-  background: rgba(0,0,0,0.4);
+  background: var(--bg-secondary);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   padding: 4px;
@@ -122,7 +97,7 @@
   padding: 7px 10px;
   border-radius: var(--radius-sm);
   background: transparent;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   font-family: var(--font-display);
   font-size: 0.75rem;
   font-weight: 600;
@@ -133,16 +108,15 @@
 }
 
 .view-btn:hover {
-  color: var(--text-secondary);
-  background: rgba(46,117,89,0.04);
+  color: var(--text-primary);
+  background: rgba(0, 0, 0, 0.03);
   transform: translateY(-1px);
 }
 
 .view-btn.active {
-  background: linear-gradient(135deg, rgba(223,63,63,0.18), rgba(230,180,80,0.08));
-  color: var(--accent-tertiary);
-  border: 1px solid rgba(230,180,80,0.25);
-  box-shadow: 0 2px 12px rgba(223,63,63,0.18), inset 0 1px 0 rgba(255,255,255,0.06);
+  background: var(--accent-primary);
+  color: var(--bg-primary);
+  border: 1px solid var(--accent-primary);
 }
 
 .view-btn-icon {
