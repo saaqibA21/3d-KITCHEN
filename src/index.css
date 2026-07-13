@@ -1,55 +1,55 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300&family=Noto+Serif+JP:wght@400;500;700;900&display=swap');
 
 /* ═══════════════════════════════════════════════════════════
-   SOLID SLEEK LIGHT — Design Token System (No Glow)
+   TRADITIONAL ZEN VERMILION & PAPER — Design Token System
    ═══════════════════════════════════════════════════════════ */
 :root {
-  /* ── Base Backgrounds (Solid Light Clean) ──────────────── */
-  --bg-app:        #f3f4f6;
-  --bg-primary:    #ffffff;
-  --bg-secondary:  #f9fafb;
-  --bg-elevated:   #ffffff;
-  --bg-card:       rgba(0, 0, 0, 0.02);
-  --bg-card-hover: rgba(0, 0, 0, 0.04);
-  --bg-glass:      rgba(255, 255, 255, 0.90);
-  --bg-glass-light: rgba(255, 255, 255, 0.95);
+  /* ── Base Backgrounds (Warm Washi Paper Textures) ───────── */
+  --bg-app:        #e5dcd3; /* Warm earth/sand base */
+  --bg-primary:    #f5ede3; /* Warm cream washi paper */
+  --bg-secondary:  #eae1d6; /* Slightly darker cream paper */
+  --bg-elevated:   #fdfaf6; /* Very light clean paper for options */
+  --bg-card:       rgba(42, 36, 33, 0.03); /* Calligraphy wash */
+  --bg-card-hover: rgba(42, 36, 33, 0.06);
+  --bg-glass:      rgba(245, 237, 227, 0.96);
+  --bg-glass-light: rgba(245, 237, 227, 0.98);
 
-  /* ── Accent — Charcoal & Slate (No Glow) ────────────────── */
-  --accent-primary:   #111827;
-  --accent-secondary: #374151;
-  --accent-tertiary:  #6b7280;
-  --accent-glow:      rgba(0, 0, 0, 0.03);
-  --accent-glow-strong: rgba(0, 0, 0, 0.06);
+  /* ── Accent — Vermilion Red & Ink Calligraphy ───────────── */
+  --accent-primary:   #c23a2b; /* Temple gate vermilion red */
+  --accent-secondary: #a62a1c; /* Deep cinnabar red */
+  --accent-tertiary:  #8b5a2b; /* Cedar wood brown */
+  --accent-glow:      rgba(194, 58, 43, 0.04);
+  --accent-glow-strong: rgba(194, 58, 43, 0.07);
 
-  /* ── Accent — Clean Pine Green (No Glow) ────────────────── */
-  --accent-teal:      #0f766e;
-  --accent-teal-dim:  rgba(15, 118, 110, 0.06);
-  --accent-teal-glow: rgba(15, 118, 110, 0.10);
+  /* ── Accent — Jade Green & Sage ────────────────────────── */
+  --accent-teal:      #2e7559; /* Traditional sage jade green */
+  --accent-teal-dim:  rgba(46, 117, 89, 0.06);
+  --accent-teal-glow: rgba(46, 117, 89, 0.10);
 
-  /* ── Accent — Royal Violet ────────────────────────────── */
-  --accent-violet:     #6366f1;
-  --accent-violet-dim: rgba(99, 102, 241, 0.06);
+  /* ── Accent — Wisteria Violet ───────────────────────────── */
+  --accent-violet:     #5e5a80; /* Traditional dusty wisteria purple */
+  --accent-violet-dim: rgba(94, 90, 128, 0.06);
 
   /* ── Status Colors ────────────────────────────────────── */
-  --status-green: #10b981;
-  --status-red:   #ef4444;
-  --status-blue:  #3b82f6;
-  --status-green-dim: rgba(16, 185, 129, 0.08);
-  --status-red-dim:   rgba(239, 68, 68, 0.06);
+  --status-green: #2e7559;
+  --status-red:   #c23a2b;
+  --status-blue:  #4a7b9d;
+  --status-green-dim: rgba(46, 117, 89, 0.08);
+  --status-red-dim:   rgba(194, 58, 43, 0.06);
 
-  /* ── Text (Charcoal) ─────────────────────────────────── */
-  --text-primary:   #111827;
-  --text-secondary: #4b5563;
-  --text-muted:     #9ca3af;
-  --text-accent:    #111827;
-  --text-teal:      #0f766e;
+  /* ── Text (Sumi Ink Calligraphy Black) ─────────────────── */
+  --text-primary:   #2b2724; /* Sumi ink black */
+  --text-secondary: #5c554e; /* Diluted ink grey */
+  --text-muted:     #8f8377; /* Soft paper shadow grey */
+  --text-accent:    #c23a2b; /* Vermilion red text */
+  --text-teal:      #2e7559;
 
-  /* ── Borders (Solid Thin) ────────────────────────────── */
-  --border-subtle:  rgba(0, 0, 0, 0.08);
-  --border-card:    rgba(0, 0, 0, 0.12);
-  --border-accent:  rgba(0, 0, 0, 0.20);
-  --border-teal:    rgba(15, 118, 110, 0.25);
-  --border-glow:    rgba(0, 0, 0, 0.15);
+  /* ── Borders (Delicate Ink Outlines) ──────────────────── */
+  --border-subtle:  rgba(43, 39, 36, 0.08);
+  --border-card:    rgba(43, 39, 36, 0.12);
+  --border-accent:  rgba(194, 58, 43, 0.30);
+  --border-teal:    rgba(46, 117, 89, 0.25);
+  --border-glow:    rgba(194, 58, 43, 0.15);
 
   /* ── Layout ───────────────────────────────────────────── */
   --sidebar-width:   300px;
@@ -57,23 +57,23 @@
   --toolbar-height:  60px;
 
   /* ── Radius ───────────────────────────────────────────── */
-  --radius-xs: 4px;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 18px;
-  --radius-xl: 24px;
-  --radius-2xl: 32px;
+  --radius-xs: 3px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-2xl: 26px;
 
-  --shadow-sm:     0 1px 3px rgba(0,0,0,0.06);
-  --shadow-md:     0 4px 12px rgba(0,0,0,0.08);
-  --shadow-lg:     0 10px 32px rgba(0,0,0,0.1);
-  --shadow-xl:     0 20px 48px rgba(0,0,0,0.12);
-  --shadow-amber:  0 2px 8px rgba(0,0,0,0.05);
-  --shadow-teal:   0 2px 8px rgba(0,0,0,0.05);
-  --shadow-panel:  0 0 0 1px rgba(0,0,0,0.08), 0 12px 32px rgba(0,0,0,0.1);
+  --shadow-sm:     0 1px 3px rgba(43,39,36,0.05);
+  --shadow-md:     0 4px 12px rgba(43,39,36,0.06);
+  --shadow-lg:     0 10px 24px rgba(43,39,36,0.08);
+  --shadow-xl:     0 20px 36px rgba(43,39,36,0.1);
+  --shadow-amber:  0 2px 8px rgba(194,58,43,0.05);
+  --shadow-teal:   0 2px 8px rgba(46,117,89,0.05);
+  --shadow-panel:  0 0 0 1px rgba(43,39,36,0.06), 0 8px 24px rgba(43,39,36,0.08);
 
-  /* ── Typography ───────────────────────────────────────── */
-  --font-display: 'DM Sans', sans-serif;
+  /* ── Typography (Traditional Mincho / Serif Display) ──── */
+  --font-display: 'Noto Serif JP', Georgia, serif;
   --font-body:    'DM Sans', sans-serif;
 
   /* ── Transitions ──────────────────────────────────────── */

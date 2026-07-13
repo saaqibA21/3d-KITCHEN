@@ -60,11 +60,11 @@ export default function FloorPlan2D() {
     ctx.clearRect(0, 0, cw, ch);
 
     // Background
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = '#f5ede3';
     ctx.fillRect(0, 0, cw, ch);
 
     // Grid
-    ctx.strokeStyle = 'rgba(0, 0, 0, 0.04)';
+    ctx.strokeStyle = 'rgba(43, 39, 36, 0.05)';
     ctx.lineWidth = 1;
     for (let x = 0; x < cw; x += GRID_SIZE) {
       ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, ch); ctx.stroke();
@@ -277,11 +277,11 @@ export default function FloorPlan2D() {
     ctx.fill();
     ctx.stroke();
 
-    ctx.fillStyle = '#111827'; // Charcoal
+    ctx.fillStyle = 'var(--text-primary)';
     ctx.font = 'bold 11px Inter, sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText('Modular Kitchen Room', origin.x + roomW / 2, origin.y + roomD / 2 - 4);
-    ctx.fillStyle = '#4b5563';
+    ctx.fillStyle = 'var(--text-secondary)';
     ctx.font = '10px Inter, sans-serif';
     ctx.fillText(`${area.toFixed(2)} m² (${roomConfig.width}m × ${roomConfig.depth}m)`, origin.x + roomW / 2, origin.y + roomD / 2 + 12);
     ctx.restore();
@@ -297,19 +297,19 @@ export default function FloorPlan2D() {
       ctx.fillStyle = rm.color || 'rgba(0, 0, 0, 0.01)';
       ctx.fillRect(rx, ry, rw, rh);
 
-      ctx.strokeStyle = selectedId === rm.id ? '#111827' : 'rgba(0, 0, 0, 0.12)';
+      ctx.strokeStyle = selectedId === rm.id ? 'var(--accent-primary)' : 'var(--border-card)';
       ctx.lineWidth = selectedId === rm.id ? 2 : 1;
       ctx.setLineDash([4, 4]);
       ctx.strokeRect(rx, ry, rw, rh);
       ctx.setLineDash([]);
 
-      ctx.fillStyle = '#111827';
+      ctx.fillStyle = 'var(--text-primary)';
       ctx.font = 'bold 10px Inter, sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(rm.label, rx + rw / 2, ry + rh / 2 - 5);
       
-      ctx.fillStyle = '#4b5563';
+      ctx.fillStyle = 'var(--text-secondary)';
       ctx.font = '8px Inter, sans-serif';
       const rmArea = rm.width * rm.depth;
       ctx.fillText(`${rmArea.toFixed(1)} m²`, rx + rw / 2, ry + rh / 2 + 6);
@@ -517,18 +517,18 @@ export default function FloorPlan2D() {
       ctx.fillStyle = baseColor;
       ctx.fillRect(0, 0, mw, mh);
 
-      ctx.strokeStyle = isSelected ? '#111827' : isHovered ? 'rgba(15, 118, 110, 0.6)' : 'rgba(0, 0, 0, 0.12)';
+      ctx.strokeStyle = isSelected ? 'var(--accent-primary)' : isHovered ? 'var(--accent-teal)' : 'var(--border-card)';
       ctx.lineWidth = isSelected ? 2 : 1;
       ctx.strokeRect(0, 0, mw, mh);
 
-      ctx.fillStyle = '#111827';
+      ctx.fillStyle = 'var(--text-primary)';
       ctx.font = `${isSelected ? 700 : 500} 9px Inter, sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       const label = mod.label.length > 10 ? mod.label.substring(0, 8) + '…' : mod.label;
       ctx.fillText(label, mw / 2, mh / 2);
 
-      ctx.fillStyle = 'rgba(17, 24, 39, 0.6)';
+      ctx.fillStyle = 'var(--text-secondary)';
       ctx.font = '7px Inter, sans-serif';
       ctx.fillText(`${Math.round(mod.width * 100)}×${Math.round(mod.depth * 100)}cm`, mw / 2, mh / 2 + 10);
 
@@ -536,13 +536,13 @@ export default function FloorPlan2D() {
     });
 
     // Compass
-    ctx.fillStyle = '#111827'; // Charcoal
+    ctx.fillStyle = 'var(--accent-primary)';
     ctx.font = 'bold 12px Inter';
     ctx.textAlign = 'center';
     ctx.fillText('N', origin.x + roomW / 2, origin.y - 24);
 
     // Module count
-    ctx.fillStyle = '#4b5563';
+    ctx.fillStyle = 'var(--text-secondary)';
     ctx.font = '10px Inter';
     ctx.textAlign = 'left';
     ctx.fillText(`${modules.length} module${modules.length !== 1 ? 's' : ''}`, 12, ch - 12);
