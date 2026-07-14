@@ -1449,13 +1449,78 @@ const APPLIANCE_MAP = {
 
 export default function KitchenModule({ mod, roomConfig }) {
   const app = useApp();
-  const { selectedId, setSelectedId, toggleDoor } = useKitchenStore();
+  const { selectedId, setSelectedId, updateModule } = useKitchenStore();
   const isSelected = mod.id === selectedId;
   const [hovered, setHovered] = useState(false);
 
   const wx = mod.position[0] - roomConfig.width / 2 + mod.width / 2;
   const wz = mod.position[1] - roomConfig.depth / 2 + mod.depth / 2;
   const wallY = mod.type.includes('wall') || mod.type === 'glass_cabinet' || mod.type === 'open_shelf' || mod.type === 'wine_rack' ? 1.45 : 0;
+
+  const handlePointerDown = (e) => {
+    if (e.event.button !== 0) return;
+    e.stopPropagation();
+    setSelectedId(mod.id);
+
+    useKitchenStore.setState({ isDragging3D: true });
+
+    const rect = app.graphicsDevice.canvas.getBoundingClientRect();
+    const screenX = e.event.clientX - rect.left;
+    const screenY = e.event.clientY - rect.top;
+
+    const cameraEntity = app.root.findByName('camera');
+    if (!cameraEntity) return;
+    const camera = cameraEntity.camera;
+
+    const from = camera.screenToWorld(screenX, screenY, camera.nearClip);
+    const to = camera.screenToWorld(screenX, screenY, camera.farClip);
+    const dir = new Vec3().sub2(to, from).normalize();
+    if (Math.abs(dir.y) < 0.0001) return;
+    const t = -from.y / dir.y;
+    const clickX = from.x + t * dir.x;
+    const clickZ = from.z + t * dir.z;
+
+    const currentWx = mod.position[0] - roomConfig.width / 2 + mod.width / 2;
+    const currentWz = mod.position[1] - roomConfig.depth / 2 + mod.depth / 2;
+    const offsetX = clickX - currentWx;
+    const offsetZ = clickZ - currentWz;
+
+    const handlePointerMove = (moveEvent) => {
+      const moveScreenX = moveEvent.clientX - rect.left;
+      const moveScreenY = moveEvent.clientY - rect.top;
+
+      const fromPt = camera.screenToWorld(moveScreenX, moveScreenY, camera.nearClip);
+      const toPt = camera.screenToWorld(moveScreenX, moveScreenY, camera.farClip);
+      const dirPt = new Vec3().sub2(toPt, fromPt).normalize();
+      if (Math.abs(dirPt.y) < 0.0001) return;
+      const tPt = -fromPt.y / dirPt.y;
+      const intersectX = fromPt.x + tPt * dirPt.x;
+      const intersectZ = fromPt.z + tPt * dirPt.z;
+
+      const targetWx = intersectX - offsetX;
+      const targetWz = intersectZ - offsetZ;
+
+      const targetX = targetWx + roomConfig.width / 2 - mod.width / 2;
+      const targetZ = targetWz + roomConfig.depth / 2 - mod.depth / 2;
+
+      const clampedX = Math.max(0, Math.min(roomConfig.width - mod.width, targetX));
+      const clampedZ = Math.max(0, Math.min(roomConfig.depth - mod.depth, targetZ));
+
+      const snappedX = Math.round(clampedX / 0.05) * 0.05;
+      const snappedZ = Math.round(clampedZ / 0.05) * 0.05;
+
+      updateModule(mod.id, { position: [snappedX, snappedZ] });
+    };
+
+    const handlePointerUp = () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+      useKitchenStore.setState({ isDragging3D: false });
+    };
+
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+  };
 
   const Renderer = CABINET_MAP[mod.type] || APPLIANCE_MAP[mod.type];
   if (!Renderer) return null;
@@ -1466,6 +1531,7 @@ export default function KitchenModule({ mod, roomConfig }) {
       position={[wx, wallY, wz]}
       rotation={[0, mod.rotation, 0]}
       onClick={(e) => { e.stopPropagation(); setSelectedId(mod.id); }}
+      onPointerDown={handlePointerDown}
       onPointerOver={(e) => { e.stopPropagation(); setHovered(true); document.body.style.cursor = 'pointer'; }}
       onPointerOut={() => { setHovered(false); document.body.style.cursor = 'auto'; }}
     >
