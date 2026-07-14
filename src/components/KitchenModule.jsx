@@ -10,16 +10,20 @@ import { hexToColor } from './Appliances';
 
 // ─── Material properties mapping ──────────────────────────────────────────────
 const MAT_PROPS = {
-  matte:      { roughness: 0.88, metalness: 0.00 },
-  glossy:     { roughness: 0.05, metalness: 0.08 },
-  wood_grain: { roughness: 0.72, metalness: 0.00 },
-  concrete:   { roughness: 0.95, metalness: 0.00 },
+  matte:       { roughness: 0.88, metalness: 0.00 },
+  glossy:      { roughness: 0.05, metalness: 0.08 },
+  ultra_gloss: { roughness: 0.02, metalness: 0.02 },
+  wood_grain:  { roughness: 0.72, metalness: 0.00 },
+  wood_walnut: { roughness: 0.65, metalness: 0.00 },
+  concrete:    { roughness: 0.95, metalness: 0.00 },
 };
 const CT_PROPS = {
   granite:  { roughness: 0.28, metalness: 0.05 },
   marble:   { roughness: 0.18, metalness: 0.04 },
   quartz:   { roughness: 0.22, metalness: 0.04 },
   laminate: { roughness: 0.55, metalness: 0.00 },
+  sintered: { roughness: 0.10, metalness: 0.00 },
+  butcher:  { roughness: 0.60, metalness: 0.00 },
 };
 
 function useCabinetMat(app, mod) {
@@ -54,21 +58,24 @@ function useCabinetMat(app, mod) {
     }
 
     const props = MAT_PROPS[material] || MAT_PROPS.matte;
-    m.roughness = props.roughness;
-    m.metalness = props.metalness;
+    m.roughness = mod.roughnessOverride !== undefined ? mod.roughnessOverride : props.roughness;
+    m.metalness = mod.metalnessOverride !== undefined ? mod.metalnessOverride : props.metalness;
 
-    // Glossy: add specular sheen
-    if (material === 'glossy') {
+    // Glossy / Ultra Gloss: add specular sheen
+    if (material === 'glossy' || material === 'ultra_gloss') {
       m.specular = new Color(0.9, 0.9, 0.9);
-      m.shininess = 85;
+      m.shininess = material === 'ultra_gloss' ? 98 : 85;
+      m.clearCoat = material === 'ultra_gloss' ? 1.0 : 0.0;
+      m.clearCoatGloss = material === 'ultra_gloss' ? 0.98 : 0.8;
     } else {
       m.specular = new Color(0.1, 0.1, 0.1);
       m.shininess = 10;
+      m.clearCoat = 0.0;
     }
 
     m.update();
     tick(n => n + 1);
-  }, [app, color, material, textureScale, textureRotation]);
+  }, [app, color, material, textureScale, textureRotation, mod.roughnessOverride, mod.metalnessOverride]);
 
   // Bootstrap a placeholder before first effect fires
   if (!matRef.current && app && app.graphicsDevice) {

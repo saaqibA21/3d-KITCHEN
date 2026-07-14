@@ -9,8 +9,16 @@ import OrbitCamera from './cameras/OrbitCamera';
 import WalkthroughCamera from './cameras/WalkthroughCamera';
 import Backsplash from './Backsplash';
 import MeasurementOverlay from './MeasurementOverlay';
-import { makeFloorTileTexture } from '../utils/textures';
+import { 
+  makeFloorTileTexture, 
+  makeHexFloorTexture, 
+  makeHerringboneTexture, 
+  makeHardwoodFloorTexture, 
+  makeMarbleFloorTexture, 
+  makeConcreteTexture 
+} from '../utils/textures';
 import { hexToColor } from './Appliances';
+import { SKY_PRESETS } from '../utils/environment';
 
 // ─── Lighting Configurations ─────────────────────────────────────────────────
 const MOODS = {
@@ -113,7 +121,7 @@ function LEDStrip({ position, width, intensity, color }) {
 
 // ─── Room Geometry ────────────────────────────────────────────────────────────
 function Room({ roomConfig, app }) {
-  const { width, depth, height, wallColor, floorColor } = roomConfig;
+  const { width, depth, height, wallColor, floorColor, floorMaterial, ceilingColor } = roomConfig;
 
   const floorTex = useMemo(() => {
     const tileColor = floorColor || '#eae1d6';
@@ -124,8 +132,17 @@ function Room({ roomConfig, app }) {
       const b = Math.max(0, parseInt(tileColor.slice(5, 7), 16) - 40);
       groutColor = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
     }
-    return makeFloorTileTexture(app, tileColor, groutColor);
-  }, [app, floorColor]);
+
+    switch (floorMaterial) {
+      case 'hex':         return makeHexFloorTexture(app, tileColor, groutColor);
+      case 'herringbone': return makeHerringboneTexture(app, tileColor, groutColor);
+      case 'hardwood':    return makeHardwoodFloorTexture(app, tileColor);
+      case 'marble':      return makeMarbleFloorTexture(app, tileColor);
+      case 'concrete':    return makeConcreteTexture(app, tileColor);
+      case 'tile':
+      default:            return makeFloorTileTexture(app, tileColor, groutColor);
+    }
+  }, [app, floorColor, floorMaterial]);
 
   const floorMat = useMaterial({
     diffuseMap: floorTex,
@@ -141,7 +158,7 @@ function Room({ roomConfig, app }) {
   });
 
   const ceilingMat = useMaterial({
-    diffuse: hexToColor('#f8f5f0'),
+    diffuse: hexToColor(ceilingColor || '#f8f5f0'),
     roughness: 0.9,
   });
 
@@ -203,23 +220,40 @@ function Room({ roomConfig, app }) {
 }
 
 // ─── Scene Global Configuration Configurator ─────────────────────────────────
-function SceneConfig({ mood, roomConfig }) {
+function SceneConfig() {
   const app = useApp();
-  const cfg = MOODS[mood] || MOODS.day;
+  const { skyPreset, exposure, ambientIntensity } = useKitchenStore();
+  const cfg = SKY_PRESETS[skyPreset] || SKY_PRESETS.day;
 
   useEffect(() => {
     if (!app) return;
     
+    // ACESFilmic tone mapping
+    try {
+      if (app.scene.toneMapping !== undefined) {
+        app.scene.toneMapping = pc.TONEMAP_ACES;
+      }
+      app.scene.exposure = exposure;
+    } catch (e) {
+      console.error('Failed to set tone mapping:', e);
+    }
+
     // Set Ambient Light
     const amb = hexToColor(cfg.ambientColor);
-    app.scene.ambientLight = new pc.Color(amb.r * cfg.ambient, amb.g * cfg.ambient, amb.b * cfg.ambient, 1);
+    app.scene.ambientLight = new pc.Color(
+      amb.r * cfg.ambient * ambientIntensity,
+      amb.g * cfg.ambient * ambientIntensity,
+      amb.b * cfg.ambient * ambientIntensity,
+      1
+    );
     
     // Set Clear/Background Color
-    app.scene.clearColor = hexToColor(cfg.fogColor);
+    const fogColor = hexToColor(cfg.fogColor);
+    app.scene.clearColor = fogColor;
 
     // Fog configuration
     app.scene.fog.type = 'linear';
-    app.scene.fog.color = hexToColor(cfg.fogColor);
+    app.scene.fog.color = fogColor;
     app.scene.fog.start = cfg.fogNear;
     app.scene.fog.end = cfg.fogFar;
 
@@ -227,7 +261,7 @@ function SceneConfig({ mood, roomConfig }) {
     if (app.scene.lightmapper) {
       app.scene.clusteredLightingEnabled = true;
     }
-  }, [app, mood, cfg]);
+  }, [app, skyPreset, exposure, ambientIntensity, cfg]);
 
   return null;
 }
@@ -236,10 +270,11 @@ function SceneConfig({ mood, roomConfig }) {
 function SceneContent({ isWalkthrough }) {
   const app = useApp();
   const {
-    roomConfig, modules, lightingMood,
-    activeFloorsView, floors, floorData, activeFloorId
+    roomConfig, modules,
+    activeFloorsView, floors, floorData, activeFloorId,
+    skyPreset, sunAngle, sunIntensity
   } = useKitchenStore();
-  const cfg = MOODS[lightingMood] || MOODS.day;
+  const cfg = SKY_PRESETS[skyPreset] || SKY_PRESETS.day;
 
   const { width, depth, height } = roomConfig;
 
@@ -278,18 +313,20 @@ function SceneContent({ isWalkthrough }) {
 
   return (
     <Entity name="scene-root">
-      <SceneConfig mood={lightingMood} roomConfig={roomConfig} />
+      <SceneConfig />
 
       {/* Directional Sun Light */}
-      <Entity position={[width * 0.3, height * 0.85, depth * 0.3]} rotation={[-45, 35, 0]}>
+      <Entity position={[width * 0.3, height * 0.85, depth * 0.3]} rotation={[-(90 - sunAngle * 0.5), 35, 0]}>
         <Light
           type="directional"
-          intensity={cfg.dirIntensity}
+          intensity={cfg.dirIntensity * sunIntensity}
           color={hexToColor(cfg.dirColor)}
           castShadows={cfg.dirIntensity > 0}
           shadowResolution={2048}
           shadowDistance={30}
-          shadowBias={0.01}
+          shadowBias={0.005}
+          shadowNormalBias={0.05}
+          vsmBlurSize={11}
         />
       </Entity>
 

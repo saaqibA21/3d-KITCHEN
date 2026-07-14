@@ -517,8 +517,32 @@ export default function FloorPlan2D() {
       ctx.fillStyle = baseColor;
       ctx.fillRect(0, 0, mw, mh);
 
-      ctx.strokeStyle = isSelected ? 'var(--accent-primary)' : isHovered ? 'var(--accent-teal)' : 'var(--border-card)';
-      ctx.lineWidth = isSelected ? 2 : 1;
+      let isColliding = false;
+      const x1 = mod.position[0];
+      const x2 = mod.position[0] + mod.width;
+      const y1 = mod.position[1];
+      const y2 = mod.position[1] + mod.depth;
+      
+      for (let other of modules) {
+        if (other.id === mod.id) continue;
+        const ox1 = other.position[0];
+        const ox2 = other.position[0] + other.width;
+        const oy1 = other.position[1];
+        const oy2 = other.position[1] + other.depth;
+        if (x1 < ox2 && x2 > ox1 && y1 < oy2 && y2 > oy1) {
+          isColliding = true;
+          break;
+        }
+      }
+
+      ctx.strokeStyle = isColliding 
+        ? '#ef4444' 
+        : isSelected 
+          ? 'var(--accent-primary)' 
+          : isHovered 
+            ? 'var(--accent-teal)' 
+            : 'var(--border-card)';
+      ctx.lineWidth = (isSelected || isColliding) ? 2 : 1;
       ctx.strokeRect(0, 0, mw, mh);
 
       ctx.fillStyle = 'var(--text-primary)';
@@ -660,6 +684,21 @@ export default function FloorPlan2D() {
         if (!mod) return;
         let nx = (px - dragOffset.x - origin.x) / SCALE;
         let ny = (py - dragOffset.y - origin.y) / SCALE;
+        
+        // Wall snap (if within 15cm, snap flush to wall)
+        const snapThreshold = 0.15;
+        if (nx < snapThreshold) {
+          nx = 0;
+        } else if (roomConfig.width - (nx + mod.width) < snapThreshold) {
+          nx = roomConfig.width - mod.width;
+        }
+        
+        if (ny < snapThreshold) {
+          ny = 0;
+        } else if (roomConfig.depth - (ny + mod.depth) < snapThreshold) {
+          ny = roomConfig.depth - mod.depth;
+        }
+        
         nx = snapToGrid(Math.max(0, Math.min(roomConfig.width - mod.width, nx)));
         ny = snapToGrid(Math.max(0, Math.min(roomConfig.depth - mod.depth, ny)));
         updateModule(dragging.id, { position: [nx, ny] });

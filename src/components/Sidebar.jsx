@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import useKitchenStore from '../store/kitchenStore';
 import { DepthProcessor } from '../services/DepthProcessor';
 import './Sidebar.css';
+import LightingPanel from './LightingPanel';
 
 const IconGrid = () => (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -819,6 +820,7 @@ export default function Sidebar() {
           { id: 'modules',    icon: <IconGrid />, label: 'Modules' },
           { id: 'room',       icon: <IconHome />, label: 'Room' },
           { id: 'backsplash', icon: <IconTiles />, label: 'Tiles' },
+          { id: 'lighting',   icon: <span>💡</span>, label: 'Lighting' },
           { id: 'blueprint',  icon: <IconScanner />, label: 'Scanner' },
           { id: 'custom',     icon: <IconMagic />, label: 'Custom' },
         ].map((t) => (
@@ -882,6 +884,13 @@ export default function Sidebar() {
               </div>
             ))}
           </>
+        )}
+
+        {/* ── LIGHTING TAB ─────────────────────────────────── */}
+        {activeTab === 'lighting' && (
+          <div className="sidebar-section animate-slide-up">
+            <LightingPanel />
+          </div>
         )}
 
         {/* ── ROOM TAB ─────────────────────────────────────── */}
@@ -1015,7 +1024,7 @@ export default function Sidebar() {
               )}
 
               <div className="divider" />
-              <div className="sidebar-section-title" style={{ marginTop: 4 }}><span>🎨</span><span>Colors</span></div>
+              <div className="sidebar-section-title" style={{ marginTop: 4 }}><span>🎨</span><span>Materials & Colors</span></div>
 
               <div className="form-row">
                 <label className="label">Wall Color</label>
@@ -1023,10 +1032,75 @@ export default function Sidebar() {
                   onChange={(e) => setRoomConfig({ wallColor: e.target.value })} />
               </div>
 
-              <div className="form-row" style={{ marginTop: 8 }}>
+              <div className="form-row">
                 <label className="label">Floor Color</label>
                 <input type="color" value={roomConfig.floorColor || '#eae1d6'}
                   onChange={(e) => setRoomConfig({ floorColor: e.target.value })} />
+              </div>
+
+              <div className="form-row">
+                <label className="label">Ceiling Color</label>
+                <input type="color" value={roomConfig.ceilingColor || '#f8f5f0'}
+                  onChange={(e) => setRoomConfig({ ceilingColor: e.target.value })} />
+              </div>
+
+              <div className="divider" />
+
+              <div className="label" style={{ marginBottom: 6 }}>Floor Material</div>
+              <div className="floor-type-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, marginBottom: 12 }}>
+                {[
+                  { id: 'tile',        label: 'Tile',        icon: '⬜' },
+                  { id: 'hex',         label: 'Hex',         icon: '⬡' },
+                  { id: 'herringbone', label: 'Herring',     icon: '🔷' },
+                  { id: 'hardwood',    label: 'Hardwood',    icon: '🪵' },
+                  { id: 'marble',      label: 'Marble',      icon: '⚪' },
+                  { id: 'concrete',    label: 'Concrete',    icon: '🪨' },
+                ].map(ft => (
+                  <button key={ft.id}
+                    className={`floor-type-btn ${(roomConfig.floorMaterial || 'tile') === ft.id ? 'active' : ''}`}
+                    onClick={() => setRoomConfig({ floorMaterial: ft.id })}
+                    style={{
+                      padding: '8px 4px',
+                      borderRadius: 'var(--radius-md)',
+                      border: `1px solid ${(roomConfig.floorMaterial || 'tile') === ft.id ? 'var(--accent-primary)' : 'var(--border-subtle)'}`,
+                      background: (roomConfig.floorMaterial || 'tile') === ft.id ? 'var(--accent-dim)' : 'var(--bg-secondary)',
+                      color: (roomConfig.floorMaterial || 'tile') === ft.id ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                      fontSize: '0.62rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4
+                    }}>
+                    <span style={{ fontSize: 18 }}>{ft.icon}</span>
+                    {ft.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="label" style={{ marginBottom: 6 }}>Wall Material</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 10 }}>
+                {[
+                  { id: 'paint',           label: 'Paint' },
+                  { id: 'brick_exposed',   label: 'Brick' },
+                  { id: 'brick_white',     label: 'White Brick' },
+                  { id: 'plaster_venetian',label: 'Plaster' },
+                  { id: 'stone_slate',     label: 'Slate' },
+                ].map(wm => (
+                  <button key={wm.id}
+                    className={`tile-btn ${(roomConfig.wallMaterial || 'paint') === wm.id ? 'active' : ''}`}
+                    onClick={() => setRoomConfig({ wallMaterial: wm.id })}
+                    style={{
+                      padding: 8,
+                      borderRadius: 'var(--radius-md)',
+                      border: `1px solid ${(roomConfig.wallMaterial || 'paint') === wm.id ? 'var(--accent-primary)' : 'var(--border-subtle)'}`,
+                      background: (roomConfig.wallMaterial || 'paint') === wm.id ? 'var(--accent-dim)' : 'var(--bg-secondary)',
+                      color: (roomConfig.wallMaterial || 'paint') === wm.id ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                      fontSize: '0.72rem',
+                      fontWeight: 500,
+                      cursor: 'pointer'
+                    }}>
+                    {wm.label}
+                  </button>
+                ))}
               </div>
             </div>
           </div>

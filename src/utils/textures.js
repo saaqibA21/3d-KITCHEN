@@ -325,9 +325,91 @@ export function getCabinetTexture(app, material, color) {
   const key = `cab_${material}_${color}`;
   switch (material) {
     case 'wood_grain': return getCachedTexture(key, () => makeWoodTexture(app, color));
+    case 'wood_walnut': return getCachedTexture(key, () => makeWoodTexture(app, color || '#3d1f0a'));
     case 'concrete': return getCachedTexture(key, () => makeConcreteTexture(app, color));
     case 'matte': return null;
     case 'glossy': return null;
+    case 'ultra_gloss': return null;
     default: return null;
   }
+}
+
+export function makeHexFloorTexture(app, tileColor = '#d4cfc8', groutColor = '#908880') {
+  return makeHexTileTexture(app, tileColor, groutColor);
+}
+
+export function makeMarbleFloorTexture(app, baseColor = '#e8e4de') {
+  return makeMarbleTexture(app, baseColor);
+}
+
+export function makeHerringboneTexture(app, tileColor = '#c8b89a', groutColor = '#8a7a68') {
+  const { canvas, ctx } = makeCanvas();
+  const GROUT = 6;
+  const TW = 80; // tile width
+  const TH = 160; // tile height (2:1 ratio)
+  
+  const grout = hexToRgb(groutColor);
+  const tile = hexToRgb(tileColor);
+  
+  ctx.fillStyle = `rgb(${grout.r},${grout.g},${grout.b})`;
+  ctx.fillRect(0, 0, SIZE, SIZE);
+  
+  ctx.fillStyle = `rgb(${tile.r},${tile.g},${tile.b})`;
+  
+  for (let row = -2; row * TH < SIZE + TH * 2; row++) {
+    for (let col = -2; col * TW < SIZE + TW * 2; col++) {
+      const x = col * TW * 2;
+      const y = row * TH;
+      
+      // Horizontal tile
+      ctx.save();
+      ctx.translate(x + TW * 0.5, y + TH * 0.5);
+      ctx.fillRect(-TW/2 + GROUT, -TH/4 + GROUT, TW - GROUT*2, TH/2 - GROUT*2);
+      ctx.restore();
+      
+      // Vertical tile (rotated)
+      ctx.save();
+      ctx.translate(x + TW * 1.5, y + TH * 0.5);
+      ctx.fillRect(-TH/4 + GROUT, -TW/2 + GROUT, TH/2 - GROUT*2, TW - GROUT*2);
+      ctx.restore();
+    }
+  }
+  
+  return wrapCanvas(app, canvas);
+}
+
+export function makeHardwoodFloorTexture(app, baseColor = '#c8a878') {
+  const { canvas, ctx } = makeCanvas();
+  const base = hexToRgb(baseColor);
+  const dark = { r: Math.max(0, base.r - 50), g: Math.max(0, base.g - 40), b: Math.max(0, base.b - 20) };
+  const light = { r: Math.min(255, base.r + 30), g: Math.min(255, base.g + 25), b: Math.min(255, base.b + 15) };
+  
+  const PLANK_H = 100; // plank height
+  const GROUT = 3;
+  
+  const img = ctx.createImageData(SIZE, SIZE);
+  
+  for (let y = 0; y < SIZE; y++) {
+    const plankRow = Math.floor(y / PLANK_H);
+    const isGroutY = (y % PLANK_H) < GROUT;
+    
+    for (let x = 0; x < SIZE; x++) {
+      const nx = (x + plankRow * 73) / SIZE;
+      const ny = y / SIZE;
+      
+      const ring = Math.sin((ny * 20 + fbm(nx * 2, ny * 2, 4, plankRow + 1) * 3) * Math.PI) * 0.5 + 0.5;
+      const grain = fbm(nx * 60, ny * 8, 3, plankRow * 7 + 3) * 0.15;
+      const t = ring * 0.7 + grain;
+      
+      const c = isGroutY ? dark : lerpColor(dark, light, Math.min(1, Math.max(0, t)));
+      const i = (y * SIZE + x) * 4;
+      img.data[i] = c.r;
+      img.data[i+1] = c.g;
+      img.data[i+2] = c.b;
+      img.data[i+3] = 255;
+    }
+  }
+  
+  ctx.putImageData(img, 0, 0);
+  return wrapCanvas(app, canvas);
 }

@@ -42,12 +42,39 @@ const DEFAULT_STATE = {
     wallColor: '#f0ebe4',
     floorColor: '#c8b89a',
     floorTexture: 'tile',
+    floorMaterial: 'tile',     // NEW
+    wallMaterial: 'paint',     // NEW
+    ceilingColor: '#f8f5f0',   // NEW
+    floorTileSize: 0.6,        // NEW
+    floorTileRotation: 0,      // NEW
   },
   modules: [],
   rooms: [], // Custom Room Zone rects: { id, label, position: [x,y], width, depth }
   selectedId: null,
   viewMode: 'plan',
   lightingMood: 'day',
+
+  // Lighting studio state
+  skyPreset: 'day',          // 'day' | 'overcast' | 'sunset' | 'night' | 'studio' | 'showroom'
+  exposure: 1.1,
+  sunAngle: 45,              // degrees, 0 = sunrise, 90 = noon, 180 = sunset
+  sunIntensity: 1.4,
+  sunColor: '#fff8f0',
+  ambientIntensity: 0.5,
+  ambientColor: '#ffffff',
+
+  // Post-processing state
+  ssaoEnabled: true,
+  ssaoIntensity: 0.7,
+  bloomEnabled: true,
+  bloomIntensity: 0.3,
+  vignetteEnabled: true,
+  vignetteIntensity: 0.35,
+  filmGrainEnabled: false,
+  dofEnabled: false,
+  contrast: 1.0,
+  saturation: 1.0,
+
   showMeasurements: true,
   showBacksheet: true, // backward compatible helper
   showBacksplash: true,
@@ -71,7 +98,19 @@ const DEFAULT_STATE = {
   ],
   floorData: {
     '1': {
-      roomConfig: { width: 5, depth: 4, height: 2.8, wallColor: '#f0ebe4', floorColor: '#c8b89a', floorTexture: 'tile' },
+      roomConfig: { 
+        width: 5, 
+        depth: 4, 
+        height: 2.8, 
+        wallColor: '#f0ebe4', 
+        floorColor: '#c8b89a', 
+        floorTexture: 'tile',
+        floorMaterial: 'tile',
+        wallMaterial: 'paint',
+        ceilingColor: '#f8f5f0',
+        floorTileSize: 0.6,
+        floorTileRotation: 0,
+      },
       modules: [],
       rooms: []
     }
@@ -295,6 +334,12 @@ const useKitchenStore = create((set, get) => ({
     set({ floors: newFloors, floorData: newFloorData });
     get().switchFloor(newId);
   },
+  setSkyPreset: (preset) => set({ skyPreset: preset }),
+  setExposure: (v) => set({ exposure: v }),
+  setSunAngle: (v) => set({ sunAngle: v }),
+  setSunIntensity: (v) => set({ sunIntensity: v }),
+  setAmbientIntensity: (v) => set({ ambientIntensity: v }),
+  setPostFX: (key, value) => set({ [key]: value }),
   toggleFloorsView: () => {
     const current = get().activeFloorsView;
     set({ activeFloorsView: current === 'active' ? 'stacked' : 'active' });
