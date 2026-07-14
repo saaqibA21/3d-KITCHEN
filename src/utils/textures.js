@@ -59,184 +59,233 @@ function wrapCanvas(app, canvas) {
 // ─── Wood Texture ──────────────────────────────────────────────────────────
 export function makeWoodTexture(app, baseColor = '#c8a878') {
   const { canvas, ctx } = makeCanvas();
-  const base = hexToRgb(baseColor);
-  const dark = { r: Math.max(0, base.r - 60), g: Math.max(0, base.g - 50), b: Math.max(0, base.b - 30) };
-  const light = { r: Math.min(255, base.r + 40), g: Math.min(255, base.g + 30), b: Math.min(255, base.b + 20) };
-  const img = ctx.createImageData(SIZE, SIZE);
-
-  for (let y = 0; y < SIZE; y++) {
-    for (let x = 0; x < SIZE; x++) {
-      const nx = x / SIZE;
-      const ny = y / SIZE;
-      // Ring pattern
-      const ring = Math.sin((ny * 18 + fbm(nx * 2, ny * 2, 5, 3) * 3) * Math.PI) * 0.5 + 0.5;
-      // Fine grain
-      const grain = fbm(nx * 40, ny * 5, 3, 7) * 0.18;
-      const t = ring * 0.75 + grain;
-      const c = lerpColor(dark, light, Math.min(1, Math.max(0, t)));
-      const i = (y * SIZE + x) * 4;
-      img.data[i] = c.r;
-      img.data[i + 1] = c.g;
-      img.data[i + 2] = c.b;
-      img.data[i + 3] = 255;
-    }
+  ctx.fillStyle = baseColor;
+  ctx.fillRect(0, 0, SIZE, SIZE);
+  
+  // Drawing wood grains using paths and curves
+  ctx.strokeStyle = 'rgba(0,0,0,0.06)';
+  ctx.lineWidth = 1.5;
+  for (let i = 0; i < SIZE; i += 6) {
+    ctx.beginPath();
+    ctx.moveTo(0, i);
+    const wave = Math.sin(i / 20) * 12;
+    ctx.quadraticCurveTo(SIZE / 2, i + wave * 2, SIZE, i);
+    ctx.stroke();
   }
-  ctx.putImageData(img, 0, 0);
+  
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.lineWidth = 1;
+  for (let i = 4; i < SIZE; i += 12) {
+    ctx.beginPath();
+    ctx.moveTo(0, i);
+    const wave = Math.sin(i / 15) * 8;
+    ctx.quadraticCurveTo(SIZE / 2, i + wave * 2, SIZE, i);
+    ctx.stroke();
+  }
+  
   return wrapCanvas(app, canvas);
 }
 
 // ─── Marble Texture ────────────────────────────────────────────────────────
 export function makeMarbleTexture(app, baseColor = '#e8e4de') {
   const { canvas, ctx } = makeCanvas();
-  const base = hexToRgb(baseColor);
-  const vein = { r: Math.max(0, base.r - 110), g: Math.max(0, base.g - 100), b: Math.max(0, base.b - 80) };
-  const img = ctx.createImageData(SIZE, SIZE);
-
-  for (let y = 0; y < SIZE; y++) {
-    for (let x = 0; x < SIZE; x++) {
-      const nx = x / SIZE;
-      const ny = y / SIZE;
-      // Flowing marble veins
-      const turbulence = fbm(nx * 3, ny * 3, 6, 2);
-      const pattern = Math.abs(Math.sin((nx * 6 + turbulence * 4) * Math.PI));
-      const t = Math.pow(pattern, 3.5);
-      const c = lerpColor(base, vein, Math.min(1, t));
-      // Add subtle glimmer
-      const glimmer = fbm(nx * 80, ny * 80, 2, 5) > 0.78 ? 15 : 0;
-      const i = (y * SIZE + x) * 4;
-      img.data[i] = Math.min(255, c.r + glimmer);
-      img.data[i + 1] = Math.min(255, c.g + glimmer);
-      img.data[i + 2] = Math.min(255, c.b + glimmer);
-      img.data[i + 3] = 255;
-    }
+  ctx.fillStyle = baseColor;
+  ctx.fillRect(0, 0, SIZE, SIZE);
+  
+  // Draw sharp veins
+  ctx.strokeStyle = 'rgba(120,110,100,0.12)';
+  ctx.lineWidth = 1.2;
+  for (let i = 0; i < 4; i++) {
+    ctx.beginPath();
+    ctx.moveTo(Math.random() * SIZE, 0);
+    ctx.bezierCurveTo(
+      Math.random() * SIZE, SIZE * 0.3,
+      Math.random() * SIZE, SIZE * 0.7,
+      Math.random() * SIZE, SIZE
+    );
+    ctx.stroke();
   }
-  ctx.putImageData(img, 0, 0);
+  
+  // Draw soft diffuse veins
+  ctx.strokeStyle = 'rgba(80,80,80,0.05)';
+  ctx.lineWidth = 4;
+  for (let i = 0; i < 2; i++) {
+    ctx.beginPath();
+    ctx.moveTo(Math.random() * SIZE, 0);
+    ctx.bezierCurveTo(
+      Math.random() * SIZE, SIZE * 0.3,
+      Math.random() * SIZE, SIZE * 0.7,
+      Math.random() * SIZE, SIZE
+    );
+    ctx.stroke();
+  }
   return wrapCanvas(app, canvas);
 }
 
 // ─── Granite Texture ───────────────────────────────────────────────────────
 export function makeGraniteTexture(app, baseColor = '#6a6a6a') {
   const { canvas, ctx } = makeCanvas();
-  const base = hexToRgb(baseColor);
-  const img = ctx.createImageData(SIZE, SIZE);
-
-  for (let y = 0; y < SIZE; y++) {
-    for (let x = 0; x < SIZE; x++) {
-      const nx = x / SIZE;
-      const ny = y / SIZE;
-      // Mineral speckle
-      const n1 = fbm(nx * 25, ny * 25, 4, 1);
-      const n2 = fbm(nx * 60, ny * 60, 3, 9);
-      const speckle = n1 * 0.6 + n2 * 0.4;
-      const offset = (speckle - 0.5) * 90;
-      // Occasional sparkle crystal
-      const sparkle = fbm(nx * 200, ny * 200, 1, 13) > 0.88 ? 60 : 0;
-      const i = (y * SIZE + x) * 4;
-      img.data[i] = Math.min(255, Math.max(0, base.r + offset + sparkle));
-      img.data[i + 1] = Math.min(255, Math.max(0, base.g + offset * 0.8 + sparkle));
-      img.data[i + 2] = Math.min(255, Math.max(0, base.b + offset * 0.6 + sparkle));
-      img.data[i + 3] = 255;
-    }
+  ctx.fillStyle = baseColor;
+  ctx.fillRect(0, 0, SIZE, SIZE);
+  
+  // Draw mineral grains
+  const colors = ['rgba(0,0,0,0.15)', 'rgba(255,255,255,0.1)', 'rgba(80,80,80,0.2)'];
+  for (let i = 0; i < 600; i++) {
+    ctx.fillStyle = colors[i % 3];
+    const r = Math.random() * 3 + 1;
+    ctx.beginPath();
+    ctx.arc(Math.random() * SIZE, Math.random() * SIZE, r, 0, Math.PI * 2);
+    ctx.fill();
   }
-  ctx.putImageData(img, 0, 0);
   return wrapCanvas(app, canvas);
 }
 
 // ─── Quartz Texture ────────────────────────────────────────────────────────
 export function makeQuartzTexture(app, baseColor = '#c4b89a') {
   const { canvas, ctx } = makeCanvas();
-  const base = hexToRgb(baseColor);
-  const img = ctx.createImageData(SIZE, SIZE);
-
-  for (let y = 0; y < SIZE; y++) {
-    for (let x = 0; x < SIZE; x++) {
-      const nx = x / SIZE;
-      const ny = y / SIZE;
-      const n = fbm(nx * 15, ny * 15, 5, 4);
-      const offset = (n - 0.5) * 40;
-      const i = (y * SIZE + x) * 4;
-      img.data[i] = Math.min(255, Math.max(0, base.r + offset));
-      img.data[i + 1] = Math.min(255, Math.max(0, base.g + offset));
-      img.data[i + 2] = Math.min(255, Math.max(0, base.b + offset));
-      img.data[i + 3] = 255;
-    }
+  ctx.fillStyle = baseColor;
+  ctx.fillRect(0, 0, SIZE, SIZE);
+  
+  // Very fine quartz mineral speckles
+  ctx.fillStyle = 'rgba(0,0,0,0.03)';
+  for (let i = 0; i < 500; i++) {
+    ctx.fillRect(Math.random() * SIZE, Math.random() * SIZE, 2, 2);
   }
-  ctx.putImageData(img, 0, 0);
+  ctx.fillStyle = 'rgba(255,255,255,0.2)';
+  for (let i = 0; i < 400; i++) {
+    ctx.fillRect(Math.random() * SIZE, Math.random() * SIZE, 1, 1);
+  }
   return wrapCanvas(app, canvas);
 }
 
 // ─── Laminate Texture ──────────────────────────────────────────────────────
 export function makeLaminateTexture(app, baseColor = '#9a7a5a') {
   const { canvas, ctx } = makeCanvas();
-  const base = hexToRgb(baseColor);
-  const img = ctx.createImageData(SIZE, SIZE);
-
-  for (let y = 0; y < SIZE; y++) {
-    for (let x = 0; x < SIZE; x++) {
-      const nx = x / SIZE;
-      const ny = y / SIZE;
-      const grain = fbm(nx * 80, ny * 8, 2, 2) * 20 - 10;
-      const i = (y * SIZE + x) * 4;
-      img.data[i] = Math.min(255, Math.max(0, base.r + grain));
-      img.data[i + 1] = Math.min(255, Math.max(0, base.g + grain));
-      img.data[i + 2] = Math.min(255, Math.max(0, base.b + grain));
-      img.data[i + 3] = 255;
-    }
+  ctx.fillStyle = baseColor;
+  ctx.fillRect(0, 0, SIZE, SIZE);
+  
+  // Smooth parallel grain lines
+  ctx.fillStyle = 'rgba(0,0,0,0.05)';
+  for (let i = 0; i < SIZE; i += 6) {
+    ctx.fillRect(0, i, SIZE, 1.5);
   }
-  ctx.putImageData(img, 0, 0);
   return wrapCanvas(app, canvas);
 }
 
 // ─── Concrete Texture ──────────────────────────────────────────────────────
 export function makeConcreteTexture(app, baseColor = '#8a8a8a') {
   const { canvas, ctx } = makeCanvas();
-  const base = hexToRgb(baseColor);
-  const img = ctx.createImageData(SIZE, SIZE);
-
-  for (let y = 0; y < SIZE; y++) {
-    for (let x = 0; x < SIZE; x++) {
-      const nx = x / SIZE;
-      const ny = y / SIZE;
-      const n = fbm(nx * 8, ny * 8, 6, 3);
-      const offset = (n - 0.5) * 50;
-      const i = (y * SIZE + x) * 4;
-      img.data[i] = Math.min(255, Math.max(0, base.r + offset));
-      img.data[i + 1] = Math.min(255, Math.max(0, base.g + offset));
-      img.data[i + 2] = Math.min(255, Math.max(0, base.b + offset));
-      img.data[i + 3] = 255;
-    }
+  ctx.fillStyle = baseColor;
+  ctx.fillRect(0, 0, SIZE, SIZE);
+  
+  // Concrete air pockets and texture grains
+  ctx.fillStyle = 'rgba(0,0,0,0.08)';
+  for (let i = 0; i < 300; i++) {
+    ctx.fillRect(Math.random() * SIZE, Math.random() * SIZE, 2, 2);
   }
-  ctx.putImageData(img, 0, 0);
+  ctx.fillStyle = 'rgba(255,255,255,0.06)';
+  for (let i = 0; i < 300; i++) {
+    ctx.fillRect(Math.random() * SIZE, Math.random() * SIZE, 3, 3);
+  }
   return wrapCanvas(app, canvas);
 }
 
 // ─── Floor Tile Texture ────────────────────────────────────────────────────
 export function makeFloorTileTexture(app, tileColor = '#c8b89a', groutColor = '#7a7068') {
   const { canvas, ctx } = makeCanvas();
-  const grout = hexToRgb(groutColor);
-  const tile = hexToRgb(tileColor);
+  
+  ctx.fillStyle = tileColor;
+  ctx.fillRect(0, 0, SIZE, SIZE);
+  
+  ctx.strokeStyle = groutColor;
+  ctx.lineWidth = 6;
+  const TILE = 120;
+  for (let x = 0; x <= SIZE; x += TILE) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, SIZE); ctx.stroke();
+  }
+  for (let y = 0; y <= SIZE; y += TILE) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(SIZE, y); ctx.stroke();
+  }
+  
+  // Subtle surface noise
+  ctx.fillStyle = 'rgba(0,0,0,0.03)';
+  for (let i = 0; i < 400; i++) {
+    const rx = Math.random() * SIZE;
+    const ry = Math.random() * SIZE;
+    ctx.fillRect(rx, ry, 2, 2);
+  }
+  
+  return wrapCanvas(app, canvas);
+}
 
-  const GROUT = 8; // grout width in px
-  const TILE = 120; // tile size in px
-
-  const img = ctx.createImageData(SIZE, SIZE);
-  for (let y = 0; y < SIZE; y++) {
-    for (let x = 0; x < SIZE; x++) {
-      const tx = x % TILE;
-      const ty = y % TILE;
-      const isGrout = tx < GROUT || ty < GROUT;
-      const nx = x / SIZE;
-      const ny = y / SIZE;
-      const variation = fbm(nx * 5, ny * 5, 3, x % 7 + 1) * 20 - 10;
-      const c = isGrout ? grout : tile;
-      const i = (y * SIZE + x) * 4;
-      img.data[i] = Math.min(255, Math.max(0, c.r + (isGrout ? 0 : variation)));
-      img.data[i + 1] = Math.min(255, Math.max(0, c.g + (isGrout ? 0 : variation)));
-      img.data[i + 2] = Math.min(255, Math.max(0, c.b + (isGrout ? 0 : variation)));
-      img.data[i + 3] = 255;
+// ─── Wall Textures ─────────────────────────────────────────────────────────
+export function makeBrickTexture(app, baseColor = '#b87d6c', isWhite = false) {
+  const { canvas, ctx } = makeCanvas();
+  ctx.fillStyle = isWhite ? '#e8e4e0' : baseColor;
+  ctx.fillRect(0, 0, SIZE, SIZE);
+  
+  ctx.strokeStyle = isWhite ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.25)';
+  ctx.lineWidth = 3;
+  
+  const bh = 32;
+  const bw = 64;
+  
+  for (let y = 0; y <= SIZE; y += bh) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(SIZE, y);
+    ctx.stroke();
+    
+    const offset = (y / bh) % 2 === 0 ? 0 : bw / 2;
+    for (let x = offset; x <= SIZE + bw; x += bw) {
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x, y + bh);
+      ctx.stroke();
     }
   }
-  ctx.putImageData(img, 0, 0);
+  return wrapCanvas(app, canvas);
+}
+
+export function makePlasterTexture(app, baseColor = '#e0dbd5') {
+  const { canvas, ctx } = makeCanvas();
+  ctx.fillStyle = baseColor;
+  ctx.fillRect(0, 0, SIZE, SIZE);
+  
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 15;
+  for (let i = 0; i < 15; i++) {
+    ctx.beginPath();
+    ctx.arc(Math.random() * SIZE, Math.random() * SIZE, Math.random() * 80 + 40, 0, Math.PI / 2);
+    ctx.stroke();
+  }
+  
+  ctx.strokeStyle = 'rgba(0,0,0,0.04)';
+  ctx.lineWidth = 10;
+  for (let i = 0; i < 15; i++) {
+    ctx.beginPath();
+    ctx.arc(Math.random() * SIZE, Math.random() * SIZE, Math.random() * 80 + 40, Math.PI, 1.5 * Math.PI);
+    ctx.stroke();
+  }
+  return wrapCanvas(app, canvas);
+}
+
+export function makeStoneSlateTexture(app, baseColor = '#3c4048') {
+  const { canvas, ctx } = makeCanvas();
+  ctx.fillStyle = baseColor;
+  ctx.fillRect(0, 0, SIZE, SIZE);
+  
+  ctx.strokeStyle = 'rgba(0,0,0,0.18)';
+  ctx.lineWidth = 3;
+  
+  const sh = 80;
+  for (let y = 0; y <= SIZE; y += sh) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(SIZE, y); ctx.stroke();
+    
+    for (let x = Math.random() * 100; x < SIZE; x += 120 + Math.random() * 100) {
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + sh); ctx.stroke();
+    }
+  }
   return wrapCanvas(app, canvas);
 }
 

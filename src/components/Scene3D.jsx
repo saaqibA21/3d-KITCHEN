@@ -15,7 +15,10 @@ import {
   makeHerringboneTexture, 
   makeHardwoodFloorTexture, 
   makeMarbleFloorTexture, 
-  makeConcreteTexture 
+  makeConcreteTexture,
+  makeBrickTexture,
+  makePlasterTexture,
+  makeStoneSlateTexture
 } from '../utils/textures';
 import { hexToColor } from './Appliances';
 import { SKY_PRESETS } from '../utils/environment';
@@ -151,10 +154,24 @@ function Room({ roomConfig, app }) {
     diffuseMapTiling: new pc.Vec2(4, 4),
   });
 
+  const wallTex = useMemo(() => {
+    const color = wallColor || '#f0ebe4';
+    switch (roomConfig.wallMaterial) {
+      case 'brick_exposed':   return makeBrickTexture(app, '#b87d6c', false);
+      case 'brick_white':     return makeBrickTexture(app, '#e8e4e0', true);
+      case 'plaster_venetian':return makePlasterTexture(app, color);
+      case 'stone_slate':     return makeStoneSlateTexture(app, color || '#3c4048');
+      case 'paint':
+      default:                return null;
+    }
+  }, [app, wallColor, roomConfig.wallMaterial]);
+
   const wallMat = useMaterial({
     diffuse: hexToColor(wallColor || '#f0ebe4'),
-    roughness: 0.88,
+    diffuseMap: wallTex,
+    roughness: roomConfig.wallMaterial === 'paint' ? 0.88 : 0.72,
     metalness: 0,
+    diffuseMapTiling: new pc.Vec2(4, 4),
   });
 
   const ceilingMat = useMaterial({
