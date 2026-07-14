@@ -19,6 +19,110 @@ const TYPE_COLORS = {
   custom_ai_object: 'rgba(15, 118, 110, 0.08)',
 };
 
+const drawHexGrid = (ctx, ox, oy, w, h, size) => {
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(ox, oy, w, h);
+  ctx.clip();
+  
+  ctx.strokeStyle = 'rgba(43, 39, 36, 0.08)';
+  ctx.lineWidth = 0.8;
+  
+  const r = size;
+  const dy = r * Math.sqrt(3);
+  const dx = r * 1.5;
+  
+  for (let y = oy - dy; y < oy + h + dy; y += dy) {
+    for (let x = ox - dx; x < ox + w + dx; x += dx * 2) {
+      ctx.beginPath();
+      for (let i = 0; i < 6; i++) {
+        const angle = (Math.PI / 3) * i;
+        const px = x + r * Math.cos(angle);
+        const py = y + r * Math.sin(angle);
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.stroke();
+      
+      ctx.beginPath();
+      for (let i = 0; i < 6; i++) {
+        const angle = (Math.PI / 3) * i;
+        const px = x + dx + r * Math.cos(angle);
+        const py = y + dy / 2 + r * Math.sin(angle);
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+};
+
+const drawHerringboneGrid = (ctx, ox, oy, w, h, size) => {
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(ox, oy, w, h);
+  ctx.clip();
+  
+  ctx.strokeStyle = 'rgba(43, 39, 36, 0.08)';
+  ctx.lineWidth = 0.8;
+  
+  const tw = size;
+  const th = size * 2.5;
+  
+  for (let row = -2; row * th < h + th * 2; row++) {
+    for (let col = -2; col * tw < w + tw * 2; col++) {
+      const cx = ox + col * tw * 2;
+      const cy = oy + row * th;
+      
+      ctx.beginPath();
+      ctx.moveTo(cx + tw * 0.5 - tw/2, cy + th * 0.5 - th/4);
+      ctx.lineTo(cx + tw * 0.5 + tw/2, cy + th * 0.5 - th/4);
+      ctx.lineTo(cx + tw * 0.5 + tw/2, cy + th * 0.5 + th/4);
+      ctx.lineTo(cx + tw * 0.5 - tw/2, cy + th * 0.5 + th/4);
+      ctx.closePath();
+      ctx.stroke();
+      
+      ctx.beginPath();
+      ctx.moveTo(cx + tw * 1.5 - th/4, cy + th * 0.5 - tw/2);
+      ctx.lineTo(cx + tw * 1.5 + th/4, cy + th * 0.5 - tw/2);
+      ctx.lineTo(cx + tw * 1.5 + th/4, cy + th * 0.5 + tw/2);
+      ctx.lineTo(cx + tw * 1.5 - th/4, cy + th * 0.5 + tw/2);
+      ctx.closePath();
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+};
+
+const drawHardwoodGrid = (ctx, ox, oy, w, h, size) => {
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(ox, oy, w, h);
+  ctx.clip();
+  
+  ctx.strokeStyle = 'rgba(43, 39, 36, 0.08)';
+  ctx.lineWidth = 0.8;
+  
+  const plankH = size;
+  for (let y = oy + plankH; y < oy + h; y += plankH) {
+    ctx.beginPath();
+    ctx.moveTo(ox, y);
+    ctx.lineTo(ox + w, y);
+    ctx.stroke();
+    
+    for (let x = ox + (y % (plankH * 3)); x < ox + w; x += plankH * 3) {
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x, y + plankH);
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+};
+
 export default function FloorPlan2D() {
   const canvasRef = useRef(null);
   const { 
@@ -130,13 +234,22 @@ export default function FloorPlan2D() {
     ctx.fillRect(origin.x, origin.y, roomW, roomD);
 
     // Floor grid lines
-    ctx.strokeStyle = 'rgba(43, 39, 36, 0.04)';
-    ctx.lineWidth = 1;
-    for (let x = origin.x; x <= origin.x + roomW; x += GRID_SIZE) {
-      ctx.beginPath(); ctx.moveTo(x, origin.y); ctx.lineTo(x, origin.y + roomD); ctx.stroke();
-    }
-    for (let y = origin.y; y <= origin.y + roomD; y += GRID_SIZE) {
-      ctx.beginPath(); ctx.moveTo(origin.x, y); ctx.lineTo(origin.x + roomW, y); ctx.stroke();
+    const floorMat = roomConfig.floorMaterial || 'tile';
+    if (floorMat === 'hex') {
+      drawHexGrid(ctx, origin.x, origin.y, roomW, roomD, 18);
+    } else if (floorMat === 'herringbone') {
+      drawHerringboneGrid(ctx, origin.x, origin.y, roomW, roomD, 20);
+    } else if (floorMat === 'hardwood') {
+      drawHardwoodGrid(ctx, origin.x, origin.y, roomW, roomD, 24);
+    } else {
+      ctx.strokeStyle = 'rgba(43, 39, 36, 0.04)';
+      ctx.lineWidth = 1;
+      for (let x = origin.x; x <= origin.x + roomW; x += GRID_SIZE) {
+        ctx.beginPath(); ctx.moveTo(x, origin.y); ctx.lineTo(x, origin.y + roomD); ctx.stroke();
+      }
+      for (let y = origin.y; y <= origin.y + roomD; y += GRID_SIZE) {
+        ctx.beginPath(); ctx.moveTo(origin.x, y); ctx.lineTo(origin.x + roomW, y); ctx.stroke();
+      }
     }
 
     // Room walls (Traditional ink block style)

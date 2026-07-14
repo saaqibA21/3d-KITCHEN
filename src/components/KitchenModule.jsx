@@ -30,6 +30,26 @@ function useCabinetMat(app, mod) {
   const matRef = useRef(null);
   const [, tick] = useState(0);
   const { color, material, textureScale = 1.0, textureRotation = 0 } = mod;
+  const { modules } = useKitchenStore();
+
+  const isColliding = useMemo(() => {
+    const x1 = mod.position[0];
+    const x2 = mod.position[0] + mod.width;
+    const y1 = mod.position[1];
+    const y2 = mod.position[1] + mod.depth;
+    
+    for (let other of modules) {
+      if (other.id === mod.id) continue;
+      const ox1 = other.position[0];
+      const ox2 = other.position[0] + other.width;
+      const oy1 = other.position[1];
+      const oy2 = other.position[1] + other.depth;
+      if (x1 < ox2 && x2 > ox1 && y1 < oy2 && y2 > oy1) {
+        return true;
+      }
+    }
+    return false;
+  }, [mod.id, mod.position, mod.width, mod.depth, modules]);
 
   useEffect(() => {
     if (!app || !app.graphicsDevice) return;
@@ -42,11 +62,12 @@ function useCabinetMat(app, mod) {
 
     // Apply color first (always)
     const pc = hexToColor(color);
-    m.diffuse = new Color(pc.r, pc.g, pc.b);
+    m.diffuse = isColliding ? new Color(1.0, 0.25, 0.25) : new Color(pc.r, pc.g, pc.b);
+    m.emissive = isColliding ? new Color(0.25, 0.05, 0.05) : new Color(0, 0, 0);
 
     // Apply texture on top of color if available
     const tex = getCabinetTexture(app, material, color);
-    if (tex) {
+    if (tex && !isColliding) {
       m.diffuseMap = tex;
       m.diffuseMapTiling = new Vec2(2 * textureScale, 2 * textureScale);
       m.diffuseMapRotation = textureRotation;
@@ -75,7 +96,7 @@ function useCabinetMat(app, mod) {
 
     m.update();
     tick(n => n + 1);
-  }, [app, color, material, textureScale, textureRotation, mod.roughnessOverride, mod.metalnessOverride]);
+  }, [app, color, material, textureScale, textureRotation, mod.roughnessOverride, mod.metalnessOverride, isColliding]);
 
   // Bootstrap a placeholder before first effect fires
   if (!matRef.current && app && app.graphicsDevice) {
@@ -1456,9 +1477,10 @@ const APPLIANCE_MAP = {
 
 export default function KitchenModule({ mod, roomConfig }) {
   const app = useApp();
-  const { selectedId, setSelectedId, updateModule } = useKitchenStore();
+  const { selectedId, setSelectedId, updateModule, toggleDoor } = useKitchenStore();
   const isSelected = mod.id === selectedId;
   const [hovered, setHovered] = useState(false);
+  const lastClickRef = useRef(0);
 
   const wx = mod.position[0] - roomConfig.width / 2 + mod.width / 2;
   const wz = mod.position[1] - roomConfig.depth / 2 + mod.depth / 2;
@@ -1507,8 +1529,22 @@ export default function KitchenModule({ mod, roomConfig }) {
       const targetWx = intersectX - offsetX;
       const targetWz = intersectZ - offsetZ;
 
-      const targetX = targetWx + roomConfig.width / 2 - mod.width / 2;
-      const targetZ = targetWz + roomConfig.depth / 2 - mod.depth / 2;
+      let targetX = targetWx + roomConfig.width / 2 - mod.width / 2;
+      let targetZ = targetWz + roomConfig.depth / 2 - mod.depth / 2;
+
+      // Wall snap (if within 15cm, snap flush to wall)
+      const snapThreshold = 0.15;
+      if (targetX < snapThreshold) {
+        targetX = 0;
+      } else if (roomConfig.width - (targetX + mod.width) < snapThreshold) {
+        targetX = roomConfig.width - mod.width;
+      }
+
+      if (targetZ < snapThreshold) {
+        targetZ = 0;
+      } else if (roomConfig.depth - (targetZ + mod.depth) < snapThreshold) {
+        targetZ = roomConfig.depth - mod.depth;
+      }
 
       const clampedX = Math.max(0, Math.min(roomConfig.width - mod.width, targetX));
       const clampedZ = Math.max(0, Math.min(roomConfig.depth - mod.depth, targetZ));
@@ -1537,7 +1573,15 @@ export default function KitchenModule({ mod, roomConfig }) {
       name={`mod-${mod.type}`}
       position={[wx, wallY, wz]}
       rotation={[0, mod.rotation, 0]}
-      onClick={(e) => { e.stopPropagation(); setSelectedId(mod.id); }}
+      onClick={(e) => {
+        e.stopPropagation();
+        setSelectedId(mod.id);
+        const now = Date.now();
+        if (now - lastClickRef.current < 300) {
+          toggleDoor(mod.id);
+        }
+        lastClickRef.current = now;
+      }}
       onPointerDown={handlePointerDown}
       onPointerOver={(e) => { e.stopPropagation(); setHovered(true); document.body.style.cursor = 'pointer'; }}
       onPointerOut={() => { setHovered(false); document.body.style.cursor = 'auto'; }}
