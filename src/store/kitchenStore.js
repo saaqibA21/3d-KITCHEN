@@ -47,6 +47,7 @@ const DEFAULT_STATE = {
     ceilingColor: '#f8f5f0',   // NEW
     floorTileSize: 0.6,        // NEW
     floorTileRotation: 0,      // NEW
+    hardwareFinish: 'chrome',  // NEW
   },
   modules: [],
   rooms: [], // Custom Room Zone rects: { id, label, position: [x,y], width, depth }
@@ -62,6 +63,7 @@ const DEFAULT_STATE = {
   sunColor: '#fff8f0',
   ambientIntensity: 0.5,
   ambientColor: '#ffffff',
+  ledColor: '#fff0d0',       // NEW
 
   // Post-processing state
   ssaoEnabled: true,
@@ -110,6 +112,7 @@ const DEFAULT_STATE = {
         ceilingColor: '#f8f5f0',
         floorTileSize: 0.6,
         floorTileRotation: 0,
+        hardwareFinish: 'chrome',
       },
       modules: [],
       rooms: []
@@ -340,6 +343,7 @@ const useKitchenStore = create((set, get) => ({
   setSunIntensity: (v) => set({ sunIntensity: v }),
   setAmbientIntensity: (v) => set({ ambientIntensity: v }),
   setPostFX: (key, value) => set({ [key]: value }),
+  setLedColor: (color) => set({ ledColor: color }),
   toggleFloorsView: () => {
     const current = get().activeFloorsView;
     set({ activeFloorsView: current === 'active' ? 'stacked' : 'active' });

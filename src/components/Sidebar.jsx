@@ -1102,6 +1102,35 @@ export default function Sidebar() {
                   </button>
                 ))}
               </div>
+
+              <div className="divider" />
+              <div className="label" style={{ marginBottom: 6 }}>Cabinet Hardware Finish</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6, marginBottom: 10 }}>
+                {[
+                  { id: 'chrome', label: 'Chrome', icon: '✨' },
+                  { id: 'brass',  label: 'Brass',  icon: '🪙' },
+                  { id: 'black',  label: 'Black',  icon: '🕶️' },
+                  { id: 'copper', label: 'Copper', icon: '🧱' }
+                ].map(hw => (
+                  <button key={hw.id}
+                    className={`tile-btn ${(roomConfig.hardwareFinish || 'chrome') === hw.id ? 'active' : ''}`}
+                    onClick={() => setRoomConfig({ hardwareFinish: hw.id })}
+                    style={{
+                      padding: '8px 2px',
+                      borderRadius: 'var(--radius-md)',
+                      border: `1px solid ${(roomConfig.hardwareFinish || 'chrome') === hw.id ? 'var(--accent-primary)' : 'var(--border-subtle)'}`,
+                      background: (roomConfig.hardwareFinish || 'chrome') === hw.id ? 'var(--accent-dim)' : 'var(--bg-secondary)',
+                      color: (roomConfig.hardwareFinish || 'chrome') === hw.id ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                      fontSize: '0.62rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3
+                    }}>
+                    <span style={{ fontSize: 13 }}>{hw.icon}</span>
+                    {hw.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         )}

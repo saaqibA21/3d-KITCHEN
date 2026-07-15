@@ -152,7 +152,23 @@ function useCountertopMat(app, mod) {
 
 // ─── Helper parts ────────────────────────────────────────────────────────────
 function Handle({ position, size = [0.008, 0.12, 0.008], horizontal = false }) {
-  const handleMat = useMaterial({ diffuse: hexToColor('#c8c8c8'), roughness: 0.08, metalness: 0.85 });
+  const { roomConfig } = useKitchenStore();
+  const finish = roomConfig.hardwareFinish || 'chrome';
+
+  const finishColors = {
+    chrome: { color: '#eaeaea', roughness: 0.08, metalness: 0.95 },
+    brass:  { color: '#e5c158', roughness: 0.15, metalness: 0.90 },
+    black:  { color: '#151515', roughness: 0.85, metalness: 0.10 },
+    copper: { color: '#c87d55', roughness: 0.20, metalness: 0.85 }
+  };
+
+  const props = finishColors[finish] || finishColors.chrome;
+
+  const handleMat = useMaterial({
+    diffuse: hexToColor(props.color),
+    roughness: props.roughness,
+    metalness: props.metalness
+  });
   const scale = horizontal ? [size[1], size[0], size[2]] : size;
   return (
     <Entity name="handle" position={position} scale={scale}>

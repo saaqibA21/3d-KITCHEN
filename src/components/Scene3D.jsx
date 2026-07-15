@@ -289,7 +289,7 @@ function SceneContent({ isWalkthrough }) {
   const {
     roomConfig, modules,
     activeFloorsView, floors, floorData, activeFloorId,
-    skyPreset, sunAngle, sunIntensity
+    skyPreset, sunAngle, sunIntensity, ledColor
   } = useKitchenStore();
   const cfg = SKY_PRESETS[skyPreset] || SKY_PRESETS.day;
 
@@ -362,7 +362,7 @@ function SceneContent({ isWalkthrough }) {
         position={[-width * 0.1, 1.42, -depth / 2 + 0.32]}
         width={width * 0.55}
         intensity={cfg.underCabinetIntensity}
-        color="#e8f0ff"
+        color={ledColor || "#fff8f0"}
       />
 
       {/* Stacked Floor entities list */}

@@ -14,6 +14,7 @@ export default function LightingPanel() {
     ssaoIntensity, bloomIntensity, vignetteIntensity,
     contrast, saturation,
     setPostFX,
+    ledColor, setLedColor,
   } = useKitchenStore();
 
   return (
@@ -147,6 +148,37 @@ export default function LightingPanel() {
           onChange={(e) => setPostFX('saturation', parseFloat(e.target.value))}
           style={{ flex: 1 }} />
         <span style={{ fontSize: '0.68rem', color: 'var(--accent-primary)', fontFamily: 'monospace', width: 28 }}>{saturation.toFixed(2)}</span>
+      </div>
+
+      <div className="divider" />
+      
+      {/* LED Underglow */}
+      <div className="sidebar-section-title" style={{ marginTop: 8 }}><span>💡</span><span>Cabinet LED Underglow</span></div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+        <input type="color" value={ledColor || '#fff0d0'}
+          onChange={(e) => setLedColor(e.target.value)}
+          style={{ width: 36, height: 26, borderRadius: 4, border: '1px solid var(--border-input)', cursor: 'pointer', background: 'none', padding: 2 }} />
+        <div style={{ display: 'flex', gap: 4, flex: 1, justifyContent: 'space-around' }}>
+          {[
+            { color: '#fff8f0', name: 'Warm' },
+            { color: '#fbbf24', name: 'Amber' },
+            { color: '#3b82f6', name: 'Ice' },
+            { color: '#10b981', name: 'Neon' },
+            { color: '#ec4899', name: 'Pink' }
+          ].map(sw => (
+            <button key={sw.color}
+              onClick={() => setLedColor(sw.color)}
+              title={sw.name}
+              style={{
+                width: 18, height: 18,
+                borderRadius: '50%',
+                background: sw.color,
+                border: `2px solid ${ledColor === sw.color ? 'var(--accent-primary)' : 'var(--border-subtle)'}`,
+                cursor: 'pointer',
+                transition: 'var(--transition)'
+              }} />
+          ))}
+        </div>
       </div>
     </div>
   );
