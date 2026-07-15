@@ -217,6 +217,37 @@ export default function PropertiesPanel() {
                   <span className="pbr-value">{(mod.textureScale ?? 1).toFixed(1)}×</span>
                 </div>
               </div>
+
+              {['base_cabinet', 'wall_cabinet', 'tall_cabinet', 'drawer_unit', 'glass_cabinet'].includes(mod.type) && (
+                <>
+                  <div className="divider" style={{ margin: '14px 0' }} />
+                  <div className="label" style={{ marginBottom: 6, color: 'var(--accent-primary)', fontWeight: 600 }}>Door Finish (Two-Tone)</div>
+                  
+                  <div className="mc-left-panel" style={{ marginBottom: 10 }}>
+                    {CABINET_MATERIALS.map(cat => (
+                      <button key={cat.id}
+                        className={`mc-category-btn ${(mod.doorMaterial || mod.material || 'laminate') === cat.id ? 'active' : ''}`}
+                        onClick={() => updateModule(mod.id, { doorMaterial: cat.id })}>
+                        <div className="mc-thumbnail" style={{ background: cat.gradient }}>
+                          {(mod.doorMaterial || mod.material || 'laminate') === cat.id && '✓'}
+                        </div>
+                        <span className="mc-label">{cat.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                  
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                    <input type="color" value={mod.doorColor || mod.color || '#e0dbd5'}
+                      onChange={(e) => updateModule(mod.id, { doorColor: e.target.value })}
+                      style={{ width: 36, height: 30, borderRadius: 6, border: '1px solid var(--border-input)', cursor: 'pointer', background: 'none', padding: 2 }} />
+                    <input type="text" value={mod.doorColor || mod.color || '#e0dbd5'}
+                      onChange={(e) => {
+                        if (/^#[0-9A-Fa-f]{6}$/.test(e.target.value)) updateModule(mod.id, { doorColor: e.target.value });
+                      }}
+                      style={{ flex: 1, background: 'var(--bg-input)', border: '1px solid var(--border-input)', borderRadius: 6, color: 'var(--text-primary)', padding: '6px 10px', fontSize: '0.76rem', fontFamily: 'monospace', outline: 'none' }} />
+                  </div>
+                </>
+              )}
             </div>
           )}
 

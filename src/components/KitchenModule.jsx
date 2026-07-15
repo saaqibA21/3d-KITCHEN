@@ -136,6 +136,15 @@ function useCountertopMat(app, mod) {
     const props = CT_PROPS[countertop] || CT_PROPS.granite;
     m.roughness = props.roughness;
     m.metalness = props.metalness;
+
+    // Add specular gloss to countertops for extreme realism
+    if (countertop === 'marble' || countertop === 'granite' || countertop === 'quartz') {
+      m.clearCoat = 0.9;
+      m.clearCoatGloss = 0.92;
+      m.specular = new Color(0.8, 0.8, 0.8);
+    } else {
+      m.clearCoat = 0;
+    }
     m.update();
     tick(n => n + 1);
   }, [app, countertop, color, textureScale]);
@@ -225,7 +234,7 @@ function AnimatedDoor({ mod, open, width, height, depthFront, children }) {
 
 // ─── Cabinet Types ────────────────────────────────────────────────────────────
 
-function BaseCabinet({ mod, isSelected, app }) {
+function BaseCabinet({ mod, isSelected, app, doorMat }) {
   const cabMat = useCabinetMat(app, mod);
   const ctMat = useCountertopMat(app, mod);
   const { w, h, d } = { w: mod.width, h: mod.height, d: mod.depth };
@@ -242,7 +251,7 @@ function BaseCabinet({ mod, isSelected, app }) {
       )}
       <AnimatedDoor mod={mod} open={mod.doorOpen} width={w} height={h * 0.72} depthFront={d / 2}>
         <Entity position={[0, h * 0.45, d / 2 + 0.006]} scale={[w - 0.055, h * 0.72, 0.018]}>
-          <Render type="box" material={cabMat} castShadows />
+          <Render type="box" material={doorMat} castShadows />
         </Entity>
         <Handle position={[w * 0.3, h * 0.55, d / 2 + 0.024]} />
       </AnimatedDoor>
@@ -252,7 +261,7 @@ function BaseCabinet({ mod, isSelected, app }) {
   );
 }
 
-function WallCabinet({ mod, isSelected, app }) {
+function WallCabinet({ mod, isSelected, app, doorMat }) {
   const cabMat = useCabinetMat(app, mod);
   const trimMat = useMaterial({ diffuse: hexToColor('#d0ccc6'), roughness: 0.6 });
   const { w, h, d } = { w: mod.width, h: mod.height, d: mod.depth };
@@ -264,7 +273,7 @@ function WallCabinet({ mod, isSelected, app }) {
       </Entity>
       <AnimatedDoor mod={mod} open={mod.doorOpen} width={w} height={h * 0.88} depthFront={d / 2}>
         <Entity position={[0, h * 0.5, d / 2 + 0.006]} scale={[w - 0.04, h * 0.88, 0.016]}>
-          <Render type="box" material={cabMat} castShadows />
+          <Render type="box" material={doorMat} castShadows />
         </Entity>
         <Handle position={[w * 0.28, h * 0.26, d / 2 + 0.022]} />
       </AnimatedDoor>
@@ -277,7 +286,7 @@ function WallCabinet({ mod, isSelected, app }) {
   );
 }
 
-function TallCabinet({ mod, isSelected, app }) {
+function TallCabinet({ mod, isSelected, app, doorMat }) {
   const cabMat = useCabinetMat(app, mod);
   const { w, h, d } = { w: mod.width, h: mod.height, d: mod.depth };
 
@@ -289,13 +298,13 @@ function TallCabinet({ mod, isSelected, app }) {
       {/* Top door */}
       <AnimatedDoor mod={mod} open={mod.doorOpen} width={w} height={h * 0.52} depthFront={d / 2}>
         <Entity position={[0, h * 0.72, d / 2 + 0.006]} scale={[w - 0.04, h * 0.52, 0.018]}>
-          <Render type="box" material={cabMat} castShadows />
+          <Render type="box" material={doorMat} castShadows />
         </Entity>
         <Handle position={[w * 0.28, h * 0.6, d / 2 + 0.024]} />
       </AnimatedDoor>
       {/* Bottom door */}
       <Entity position={[0, h * 0.24, d / 2 + 0.006]} scale={[w - 0.04, h * 0.44, 0.018]}>
-        <Render type="box" material={cabMat} castShadows />
+        <Render type="box" material={doorMat} castShadows />
       </Entity>
       <Handle position={[w * 0.28, h * 0.38, d / 2 + 0.024]} />
       <KickPlate width={w} depth={d} />
@@ -304,7 +313,7 @@ function TallCabinet({ mod, isSelected, app }) {
   );
 }
 
-function DrawerUnit({ mod, isSelected, app }) {
+function DrawerUnit({ mod, isSelected, app, doorMat }) {
   const cabMat = useCabinetMat(app, mod);
   const ctMat = useCountertopMat(app, mod);
   const { w, h, d } = { w: mod.width, h: mod.height, d: mod.depth };
@@ -326,7 +335,7 @@ function DrawerUnit({ mod, isSelected, app }) {
         return (
           <Entity key={i} name="drawer-group">
             <Entity position={[0, dy, d / 2 + 0.007]} scale={[w - 0.055, dh - 0.018, 0.018]}>
-              <Render type="box" material={cabMat} castShadows />
+              <Render type="box" material={doorMat} castShadows />
             </Entity>
             <Handle position={[0, dy, d / 2 + 0.024]} size={[w * 0.5, 0.01, 0.01]} horizontal />
           </Entity>
@@ -386,7 +395,7 @@ function IslandUnit({ mod, isSelected, app }) {
   );
 }
 
-function GlassCabinet({ mod, isSelected, app }) {
+function GlassCabinet({ mod, isSelected, app, doorMat }) {
   const cabMat = useCabinetMat(app, mod);
   const trimMat = useMaterial({ diffuse: hexToColor('#d0ccc6'), roughness: 0.6 });
   const glassMat = useMaterial({ diffuse: hexToColor('#c8e8f4'), opacity: 0.38, roughness: 0.02, blendType: 'normal' });
@@ -406,7 +415,7 @@ function GlassCabinet({ mod, isSelected, app }) {
         {/* Glass frame bars */}
         {[h * 0.38, h * 0.64].map((fy, i) => (
           <Entity key={i} position={[0, fy, d / 2 + 0.01]} scale={[w - 0.055, 0.012, 0.012]}>
-            <Render type="box" material={cabMat} />
+            <Render type="box" material={doorMat} />
           </Entity>
         ))}
         <Handle position={[w * 0.28, h * 0.26, d / 2 + 0.02]} />
@@ -1493,10 +1502,18 @@ const APPLIANCE_MAP = {
 
 export default function KitchenModule({ mod, roomConfig }) {
   const app = useApp();
-  const { selectedId, setSelectedId, updateModule, toggleDoor } = useKitchenStore();
+  const { selectedId, setSelectedId, updateModule, toggleDoor, modules } = useKitchenStore();
   const isSelected = mod.id === selectedId;
   const [hovered, setHovered] = useState(false);
   const lastClickRef = useRef(0);
+
+  const doorMat = useCabinetMat(app, {
+    ...mod,
+    color: mod.doorColor || mod.color || '#e0dbd5',
+    material: mod.doorMaterial || mod.material || 'laminate',
+    roughness: mod.doorRoughness !== undefined ? mod.doorRoughness : mod.roughness,
+    metalness: mod.doorMetalness !== undefined ? mod.doorMetalness : mod.metalness,
+  });
 
   const wx = mod.position[0] - roomConfig.width / 2 + mod.width / 2;
   const wz = mod.position[1] - roomConfig.depth / 2 + mod.depth / 2;
@@ -1562,6 +1579,32 @@ export default function KitchenModule({ mod, roomConfig }) {
         targetZ = roomConfig.depth - mod.depth;
       }
 
+      // Cabinet-to-Cabinet Snapping (Auto-alignment to other modules)
+      const cabSnapThreshold = 0.12; // Snap within 12cm of another cabinet
+      for (const other of modules) {
+        if (other.id === mod.id) continue;
+        
+        // Check if close vertically (Z/Depth overlap)
+        const zOverlap = targetX + mod.width > other.position[0] - 0.05 && targetX < other.position[0] + other.width + 0.05;
+        if (zOverlap) {
+          if (Math.abs(targetZ - (other.position[1] + other.depth)) < cabSnapThreshold) {
+            targetZ = other.position[1] + other.depth;
+          } else if (Math.abs((targetZ + mod.depth) - other.position[1]) < cabSnapThreshold) {
+            targetZ = other.position[1] - mod.depth;
+          }
+        }
+        
+        // Check if close horizontally (X/Width overlap)
+        const xOverlap = targetZ + mod.depth > other.position[1] - 0.05 && targetZ < other.position[1] + other.depth + 0.05;
+        if (xOverlap) {
+          if (Math.abs(targetX - (other.position[0] + other.width)) < cabSnapThreshold) {
+            targetX = other.position[0] + other.width;
+          } else if (Math.abs((targetX + mod.width) - other.position[0]) < cabSnapThreshold) {
+            targetX = other.position[0] - mod.width;
+          }
+        }
+      }
+
       const clampedX = Math.max(0, Math.min(roomConfig.width - mod.width, targetX));
       const clampedZ = Math.max(0, Math.min(roomConfig.depth - mod.depth, targetZ));
 
@@ -1602,7 +1645,7 @@ export default function KitchenModule({ mod, roomConfig }) {
       onPointerOver={(e) => { e.stopPropagation(); setHovered(true); document.body.style.cursor = 'pointer'; }}
       onPointerOut={() => { setHovered(false); document.body.style.cursor = 'auto'; }}
     >
-      <Renderer mod={mod} isSelected={isSelected || hovered} app={app} />
+      <Renderer mod={mod} isSelected={isSelected || hovered} app={app} doorMat={doorMat} />
     </Entity>
   );
 }

@@ -95,6 +95,7 @@ function PendantLight({ position, intensity, color }) {
           color={hexToColor(color)}
           range={4}
           castShadows={true}
+          shadowType={pc.SHADOW_PCF5}
           shadowResolution={512}
         />
       </Entity>
@@ -339,6 +340,7 @@ function SceneContent({ isWalkthrough }) {
           intensity={cfg.dirIntensity * sunIntensity}
           color={hexToColor(cfg.dirColor)}
           castShadows={cfg.dirIntensity > 0}
+          shadowType={pc.SHADOW_PCF5}
           shadowResolution={2048}
           shadowDistance={30}
           shadowBias={0.005}

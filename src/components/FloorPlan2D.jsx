@@ -812,6 +812,32 @@ export default function FloorPlan2D() {
           ny = roomConfig.depth - mod.depth;
         }
         
+        // Cabinet-to-Cabinet Snapping (Auto-alignment to other modules)
+        const cabSnapThreshold = 0.12; // Snap within 12cm of another cabinet
+        for (const other of modules) {
+          if (other.id === dragging.id) continue;
+          
+          // Check if close vertically (Z/Depth overlap)
+          const zOverlap = nx + mod.width > other.position[0] - 0.05 && nx < other.position[0] + other.width + 0.05;
+          if (zOverlap) {
+            if (Math.abs(ny - (other.position[1] + other.depth)) < cabSnapThreshold) {
+              ny = other.position[1] + other.depth;
+            } else if (Math.abs((ny + mod.depth) - other.position[1]) < cabSnapThreshold) {
+              ny = other.position[1] - mod.depth;
+            }
+          }
+          
+          // Check if close horizontally (X/Width overlap)
+          const xOverlap = ny + mod.depth > other.position[1] - 0.05 && ny < other.position[1] + other.depth + 0.05;
+          if (xOverlap) {
+            if (Math.abs(nx - (other.position[0] + other.width)) < cabSnapThreshold) {
+              nx = other.position[0] + other.width;
+            } else if (Math.abs((nx + mod.width) - other.position[0]) < cabSnapThreshold) {
+              nx = other.position[0] - mod.width;
+            }
+          }
+        }
+        
         nx = snapToGrid(Math.max(0, Math.min(roomConfig.width - mod.width, nx)));
         ny = snapToGrid(Math.max(0, Math.min(roomConfig.depth - mod.depth, ny)));
         updateModule(dragging.id, { position: [nx, ny] });
