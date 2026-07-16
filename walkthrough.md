@@ -2,7 +2,7 @@
 
 I have resolved several critical user interaction bugs and introduced advanced drafting features to make both 2D floor plans and 3D modeling work seamlessly together. 
 
-All improvements have been committed and pushed to GitHub (Commit `b6e3ff4` on `main`).
+All improvements have been committed and pushed to GitHub (Commit `9043120` on `main`).
 
 ---
 
@@ -46,8 +46,17 @@ All improvements have been committed and pushed to GitHub (Commit `b6e3ff4` on `
 * Custom color picker + quick swatches for *Warm White, Amber, Ice Blue, Emerald, and Pink*.
 * Updates light entity colors and standard materials dynamically inside the 3D scene.
 
+### 3. 🌑 High-Tech Dark CAD Layout Theme (fixtheme)
+* **The Problem**: The app interface had a premium dark Blender-like design system, but the 2D canvas was colored a bright, glaring sand-yellow (#f5ede3), which broke visual consistency.
+* **The Fix**: Overhauled all 2D floor plan layout drawing colors:
+  * 🌌 **Canvas Background**: Swapped to deep charcoal black `#0d1117` matching the rest of the dark theme.
+  * 📐 **Grid & Tile Grout Lines**: Drawn with subtle translucent white strokes (`rgba(255, 255, 255, 0.08)`) instead of dark ink.
+  * 🏗️ **Room Walls**: Highlighted with a glowing gold stroke (`#f59e0b`).
+  * ✍️ **Dimension Values**: Rendered inside dark `#0d1117` badges using high-tech **Electric Gold** text `#fbbf24`.
+  * 🧊 **Cabinet Module Fills**: Color-coded using translucent, modern tint fills (e.g. green for overhead wall cabinets, blue for water fixtures/sinks, red for hot appliances/stoves).
+
 ---
 
 ## 📦 Verified Build & Deployment
 * Ran a complete compilation verification check using `npm run build`.
-* Build successfully passed without errors: `dist/assets/index-DmLrgMAZ.js` compiled (3.17 MB).
+* Build successfully passed without errors: `dist/assets/index-C5nr-To5.js` compiled (3.17 MB).

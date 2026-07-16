@@ -168,7 +168,7 @@ function Room({ roomConfig, app }) {
   }, [app, wallColor, roomConfig.wallMaterial]);
 
   const wallMat = useMaterial({
-    diffuse: hexToColor(wallColor || '#f0ebe4'),
+    diffuse: hexToColor(wallColor || '#181c24'),
     diffuseMap: wallTex,
     roughness: roomConfig.wallMaterial === 'paint' ? 0.88 : 0.72,
     metalness: 0,
@@ -176,12 +176,12 @@ function Room({ roomConfig, app }) {
   });
 
   const ceilingMat = useMaterial({
-    diffuse: hexToColor(ceilingColor || '#f8f5f0'),
+    diffuse: hexToColor(ceilingColor || '#222530'),
     roughness: 0.9,
   });
 
   const baseboardMat = useMaterial({
-    diffuse: hexToColor('#d8d0c4'),
+    diffuse: hexToColor('#1a1d25'),
     roughness: 0.7,
   });
 

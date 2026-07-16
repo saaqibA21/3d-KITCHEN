@@ -39,12 +39,12 @@ const DEFAULT_STATE = {
     width: 5,
     depth: 4,
     height: 2.8,
-    wallColor: '#f0ebe4',
-    floorColor: '#c8b89a',
+    wallColor: '#181c24',
+    floorColor: '#282c35',
     floorTexture: 'tile',
     floorMaterial: 'tile',     // NEW
     wallMaterial: 'paint',     // NEW
-    ceilingColor: '#f8f5f0',   // NEW
+    ceilingColor: '#222530',   // NEW
     floorTileSize: 0.6,        // NEW
     floorTileRotation: 0,      // NEW
     hardwareFinish: 'chrome',  // NEW
@@ -104,12 +104,12 @@ const DEFAULT_STATE = {
         width: 5, 
         depth: 4, 
         height: 2.8, 
-        wallColor: '#f0ebe4', 
-        floorColor: '#c8b89a', 
+        wallColor: '#181c24', 
+        floorColor: '#282c35', 
         floorTexture: 'tile',
         floorMaterial: 'tile',
         wallMaterial: 'paint',
-        ceilingColor: '#f8f5f0',
+        ceilingColor: '#222530',
         floorTileSize: 0.6,
         floorTileRotation: 0,
         hardwareFinish: 'chrome',
