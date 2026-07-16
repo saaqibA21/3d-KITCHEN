@@ -5,18 +5,18 @@ const GRID_SIZE = 20; // pixels per 10cm
 const SCALE = 50; // pixels per meter
 
 const TYPE_COLORS = {
-  base_cabinet: 'rgba(0, 0, 0, 0.03)',
-  wall_cabinet: 'rgba(15, 118, 110, 0.05)', // soft pine
-  tall_cabinet: 'rgba(0, 0, 0, 0.06)',
-  corner_base: 'rgba(0, 0, 0, 0.03)',
-  island: 'rgba(0, 0, 0, 0.05)',
-  drawer_unit: 'rgba(0, 0, 0, 0.03)',
-  sink: 'rgba(15, 118, 110, 0.10)',
-  stove: 'rgba(220, 38, 38, 0.04)',
-  refrigerator: 'rgba(0, 0, 0, 0.05)',
-  oven: 'rgba(220, 38, 38, 0.04)',
-  dishwasher: 'rgba(0, 0, 0, 0.05)',
-  custom_ai_object: 'rgba(15, 118, 110, 0.08)',
+  base_cabinet: 'rgba(255, 255, 255, 0.04)',
+  wall_cabinet: 'rgba(16, 185, 129, 0.06)',
+  tall_cabinet: 'rgba(255, 255, 255, 0.07)',
+  corner_base: 'rgba(255, 255, 255, 0.04)',
+  island: 'rgba(255, 255, 255, 0.05)',
+  drawer_unit: 'rgba(255, 255, 255, 0.04)',
+  sink: 'rgba(59, 130, 246, 0.08)',
+  stove: 'rgba(239, 68, 68, 0.08)',
+  refrigerator: 'rgba(255, 255, 255, 0.06)',
+  oven: 'rgba(239, 68, 68, 0.06)',
+  dishwasher: 'rgba(255, 255, 255, 0.05)',
+  custom_ai_object: 'rgba(245, 158, 11, 0.08)',
 };
 
 const drawHexGrid = (ctx, ox, oy, w, h, size) => {
@@ -25,7 +25,7 @@ const drawHexGrid = (ctx, ox, oy, w, h, size) => {
   ctx.rect(ox, oy, w, h);
   ctx.clip();
   
-  ctx.strokeStyle = 'rgba(43, 39, 36, 0.08)';
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
   ctx.lineWidth = 0.8;
   
   const r = size;
@@ -66,7 +66,7 @@ const drawHerringboneGrid = (ctx, ox, oy, w, h, size) => {
   ctx.rect(ox, oy, w, h);
   ctx.clip();
   
-  ctx.strokeStyle = 'rgba(43, 39, 36, 0.08)';
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
   ctx.lineWidth = 0.8;
   
   const tw = size;
@@ -103,7 +103,7 @@ const drawHardwoodGrid = (ctx, ox, oy, w, h, size) => {
   ctx.rect(ox, oy, w, h);
   ctx.clip();
   
-  ctx.strokeStyle = 'rgba(43, 39, 36, 0.08)';
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
   ctx.lineWidth = 0.8;
   
   const plankH = size;
@@ -164,11 +164,11 @@ export default function FloorPlan2D() {
     ctx.clearRect(0, 0, cw, ch);
 
     // Background
-    ctx.fillStyle = '#f5ede3';
+    ctx.fillStyle = '#0d1117';
     ctx.fillRect(0, 0, cw, ch);
 
     // Grid
-    ctx.strokeStyle = 'rgba(43, 39, 36, 0.05)';
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
     ctx.lineWidth = 1;
     for (let x = 0; x < cw; x += GRID_SIZE) {
       ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, ch); ctx.stroke();
@@ -223,14 +223,14 @@ export default function FloorPlan2D() {
     const roomD = roomConfig.depth * SCALE;
 
     // Room shadow
-    ctx.shadowColor = 'rgba(43, 39, 36, 0.04)';
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
     ctx.shadowBlur = 30;
-    ctx.fillStyle = roomConfig.floorColor || '#eae1d6';
+    ctx.fillStyle = roomConfig.floorColor || '#1c2230';
     ctx.fillRect(origin.x, origin.y, roomW, roomD);
     ctx.shadowBlur = 0;
 
     // Room floor
-    ctx.fillStyle = roomConfig.floorColor || '#eae1d6';
+    ctx.fillStyle = roomConfig.floorColor || '#1c2230';
     ctx.fillRect(origin.x, origin.y, roomW, roomD);
 
     // Floor grid lines
@@ -242,7 +242,7 @@ export default function FloorPlan2D() {
     } else if (floorMat === 'hardwood') {
       drawHardwoodGrid(ctx, origin.x, origin.y, roomW, roomD, 24);
     } else {
-      ctx.strokeStyle = 'rgba(43, 39, 36, 0.04)';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
       ctx.lineWidth = 1;
       for (let x = origin.x; x <= origin.x + roomW; x += GRID_SIZE) {
         ctx.beginPath(); ctx.moveTo(x, origin.y); ctx.lineTo(x, origin.y + roomD); ctx.stroke();
@@ -253,8 +253,8 @@ export default function FloorPlan2D() {
     }
 
     // Room walls (Traditional ink block style)
-    ctx.strokeStyle = '#2b2724';
-    ctx.lineWidth = 4;
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 6;
     ctx.strokeRect(origin.x, origin.y, roomW, roomD);
 
     // Exterior Dimension Lines & ticks (Top and Left)
@@ -291,18 +291,18 @@ export default function FloorPlan2D() {
     drawHash(origin.x + roomW, topY);
 
     // Dimension text background + text
-    ctx.fillStyle = '#f5ede3';
+    ctx.fillStyle = '#0d1117';
     const topText = `${roomConfig.width.toFixed(2)} m`;
     const topTextW = ctx.measureText(topText).width + 8;
     ctx.fillRect(origin.x + roomW / 2 - topTextW / 2, topY - 6, topTextW, 12);
-    ctx.fillStyle = '#c23a2b'; // Vermilion red
+    ctx.fillStyle = '#fbbf24'; // Electric Gold
     ctx.fillText(topText, origin.x + roomW / 2, topY + 3);
 
     // 2. Left Wall Main Dimension Line
     const leftX = origin.x - 24;
     ctx.save();
-    ctx.strokeStyle = '#8f8377';
-    ctx.fillStyle = '#8f8377';
+    ctx.strokeStyle = '#8b949e';
+    ctx.fillStyle = '#8b949e';
     ctx.beginPath();
     ctx.moveTo(leftX, origin.y);
     ctx.lineTo(leftX, origin.y + roomD);
@@ -320,14 +320,14 @@ export default function FloorPlan2D() {
     drawHash(leftX, origin.y + roomD);
 
     // Left dimension text
-    ctx.fillStyle = '#f5ede3';
+    ctx.fillStyle = '#0d1117';
     const leftText = `${roomConfig.depth.toFixed(2)} m`;
     const leftTextW = ctx.measureText(leftText).width + 8;
     ctx.fillRect(leftX - 6, origin.y + roomD / 2 - 6, 12, 12);
     
     ctx.translate(leftX + 3, origin.y + roomD / 2);
     ctx.rotate(-Math.PI / 2);
-    ctx.fillStyle = '#c23a2b'; // Vermilion red
+    ctx.fillStyle = '#fbbf24'; // Electric Gold
     ctx.fillText(leftText, 0, 0);
     ctx.restore();
 
@@ -378,8 +378,8 @@ export default function FloorPlan2D() {
     // 4. Centered Room Label & Area (Dark glassmorphism badge)
     const area = roomConfig.width * roomConfig.depth;
     ctx.save();
-    ctx.fillStyle = '#f5ede3';
-    ctx.strokeStyle = '#2b2724';
+    ctx.fillStyle = '#1c2230';
+    ctx.strokeStyle = 'var(--border-accent)';
     ctx.lineWidth = 1;
     const badgeW = 165;
     const badgeH = 46;
